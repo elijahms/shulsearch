@@ -26,8 +26,14 @@ env:
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
     value: 1:943172835834:web:46aac3ae448cc2852fec43
     availability: [BUILD, RUNTIME]
+  # Public, HTTP-referrer-restricted Maps JS key (safe to expose).
+  - variable: NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY
+    value: AIzaSyBngDCyGb5VceAvdSFXoQrWa1H9piPiYQ0
+    availability: [BUILD, RUNTIME]
 
   # --- Secrets added in later plans (Cloud Secret Manager) ---
+  # GOOGLE_MAPS_SERVER_KEY (Places/Routes/Geocoding) + RAPIDAPI_KEY are server-side secrets;
+  # wire them via `firebase apphosting:secrets:set` in Plan 03 when the search API uses them.
   # - variable: RAPIDAPI_KEY
   #   secret: rapidapi-key
   #   availability: [RUNTIME]
