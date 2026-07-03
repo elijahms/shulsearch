@@ -837,15 +837,17 @@ jobs:
   build-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      # NB: pin the LATEST major of each action — they drift and old majors break CI.
+      # Verify with `gh api repos/<owner>/<action>/releases/latest --jq .tag_name`.
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
           cache: 'npm'
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
