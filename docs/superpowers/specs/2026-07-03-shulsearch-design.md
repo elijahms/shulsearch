@@ -1,26 +1,27 @@
 # ShulSearch — v1 Design
 
-**Date:** 2026-07-03
-**Status:** Approved (design) — pending technical verification + implementation plan
+**Date:** 2026-07-03 (rev. 1.1 — updated after technical verification)
+**Status:** Approved — ready for implementation planning
 **Owner:** Elijah Silverman (`elijahmsilverman@gmail.com` for GCP/Firebase)
+**Companion doc:** `2026-07-03-shulsearch-technical-findings.md` (verification detail + sources)
 
 ## 1. Problem & Premise
 
-Home/apartment search tools are blind to the one thing that matters most to observant
-Jewish buyers and renters: **can you walk to shul on Shabbat?** ShulSearch inverts the
-usual search — instead of "here are homes in a city," it answers **"here are homes within a
-walkable radius of a shul (of your denomination) in this city."**
+Home/apartment search tools are blind to the one thing that matters most to observant Jewish
+buyers and renters: **can you walk to shul on Shabbat?** ShulSearch inverts the usual search —
+instead of "here are homes in a city," it answers **"here are homes within a walkable radius of
+a shul (of your denomination) in this city."**
 
 The product is grounded in a curated database of shuls. Regular users search without any
-account. The community keeps the shul database honest by adding and disputing entries, all
-of which flow through an admin moderation queue.
+account. The community keeps the shul database honest by adding and disputing entries, all of
+which flow through an admin moderation queue.
 
 ## 2. Users & Core Flows
 
-### 2.1 Searcher (no login)
+### 2.1 Searcher (no login — anonymous Firebase Auth)
 1. Pick a **metro**.
-2. Choose either a **specific shul** (autocomplete within the metro) or **"any shul"** +
-   a **denomination filter**.
+2. Choose either a **specific shul** (search over our own DB) or **"any shul"** + a
+   **denomination filter**.
 3. Set a **walk radius** (presets: 0.5 / 0.75 / 1 / 1.5 mi).
 4. Optional home filters: **buy vs. rent**, price range, beds, baths, home type.
 5. Get results — only listings within the radius of a qualifying shul — on a **map + list**,
@@ -32,165 +33,192 @@ of which flow through an admin moderation queue.
 - Optional contact email so an admin can follow up.
 
 ### 2.3 Admin (Google login)
-- Sign in with Google; access gated to an **email allowlist**.
+- Sign in with Google; access gated by a **custom claim** (`admin:true`) + email allowlist.
 - Review the moderation queue with a **diff view** (proposed vs. current) for edits/disputes.
 - **Approve / edit-then-approve / reject** with an audit trail.
+- **Curate coverage gaps** (a first-class task, not an afterthought): review low-confidence
+  auto-seeded records and hand-add missing shuls, using GoDaven/Chabad locators as on-screen
+  human reference (never scraped/imported).
 - View an **analytics dashboard** of search activity.
 
 ## 3. Architecture & Stack
 
 | Concern | Choice |
 | --- | --- |
-| Framework | **Next.js** (App Router, TypeScript) |
+| Framework | **Next.js 15.x** (App Router, TypeScript), Node 20+ (`engines`) |
 | UI | **shadcn/ui** + Tailwind; collapsible-sidebar app shell |
 | Database | **Firestore** |
-| Auth | **Firebase Auth** (Google provider) — admins only; searchers anonymous |
-| Hosting | **Firebase App Hosting** (Next.js SSR) |
-| Maps/geo | **Google Maps Platform** — `@vis.gl/react-google-maps` (map), Places (seeding + shul autocomplete), Geocoding, **Distance Matrix** (walking distance) |
-| Listings | **`ListingsProvider`** interface; `ZillowRapidApiProvider` is the only Zillow-aware module |
-| Validation | **zod** on all inbound payloads (search params, submissions) |
+| Auth | **Firebase Auth** — Google provider for admins (custom claim + allowlist); Anonymous auth for searchers |
+| Hosting | **Firebase App Hosting** (Blaze plan, managed Cloud Run + CDN, `apphosting.yaml`, GitHub push-to-deploy) |
+| Map | **`@vis.gl/react-google-maps`** v1 |
+| Geo (seed + display) | **Google Maps Platform** — Places (New) `synagogue` search for **discovery + `place_id` only**, Geocoding (rare), **Routes API `computeRouteMatrix`** (WALKING) for displayed walk times |
+| Listings | **`ListingsProvider`** interface. Primary adapter: **OpenWeb Ninja "Real-Time Zillow Data"** (`/search/coordinates`). Fallback: **apimaker `zillow-com1`**. `MockListingsProvider` for dev/tests |
+| Validation | **zod** on all inbound payloads |
+| Secrets | **Cloud Secret Manager** (RapidAPI key, server Maps key) via `apphosting.yaml` |
 
-**Key principle — provider abstraction:** every quirk of the unofficial Zillow RapidAPI is
-isolated in one adapter behind a stable `ListingsProvider` interface. Swapping to Rentcast,
-ATTOM, or any other source later is a one-file change. A `MockListingsProvider` backs local
-development and tests.
+**Provider abstraction:** every quirk of a listings source is isolated in one adapter behind a
+stable `ListingsProvider` interface; swapping providers is a one-file change. This is
+load-bearing — there is **no official Zillow API in 2026**; all endpoints are unofficial
+scrapers that can break or be taken down, so the design also includes caching, retry/backoff,
+a provider health check/failover, and a nightly canary.
+
+**Two Google Maps keys:** a **server-only secret** for Routes API (walk times — must not be
+browser-exposed) and a separate **HTTP-referrer-restricted browser key**
+(`NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY`, declared with `BUILD` availability) for the client map.
 
 ## 4. Search Pipeline
 
-### 4.1 Chosen approach — Live bounding-box query
+### 4.1 Chosen approach — Live bounding-box query (verified feasible)
 Compute a bounding box around the chosen shul(s) sized to the radius, query the listings
-provider **by map bounds** for just that area, then haversine-filter to the exact circle.
-We never persist provider listing data (ToS-safer), listings stay fresh, and we fetch only
-what's near a shul.
-
-**Rejected alternatives:**
-- *Whole-city query then filter* — simpler but wasteful; hits provider pagination limits in
-  dense metros.
-- *Pre-cache all metro listings in Firestore* — fast and analytics-friendly, but stale data
-  and storing provider data is a ToS liability. Out for v1.
+provider's **coordinate/bounds endpoint** for just that area, then haversine-filter to the exact
+circle. We never persist provider listing data (ToS-safer), listings stay fresh, and we fetch
+only what's near a shul. (OpenWeb Ninja `/search/coordinates` accepts an explicit N/S/E/W box —
+confirmed in verification.)
 
 ### 4.2 Flow
 ```
 shul point(s)
   → bounding box (sized to radius)
-  → ListingsProvider.search(bounds, {buy|rent, price, beds, baths, homeType})
-  → haversine filter to exact circle
+  → [cache check] ListingsProvider.search(bounds, {buy|rent, price, beds, baths, homeType})
+  → haversine filter to exact circle          (provider returns a rectangle, so this is required)
   → sort by distance to nearest qualifying shul
-  → take top N (~20 shown)
-  → Distance Matrix (walking) batch call for shown results
+  → take top N (hard cap ~15–20 shown)
+  → Routes API computeRouteMatrix (WALKING, duration+distanceMeters mask) for shown results
+    [walk-time cache keyed by (shulId, listing lat/lng rounded ~4dp)]
   → render map + list with walk distance/time
 ```
 
 - **Specific-shul mode:** one shul point → one box/circle.
-- **Any-shul mode:** load qualifying shuls for the metro (filtered by denomination), query
-  the metro-area bounds, keep each listing whose **minimum distance to any qualifying shul**
-  ≤ radius; annotate with that nearest shul.
-- **Caps:** page provider results up to a sane cap; if capped, UI shows "closest N."
-- **Caching:** short-TTL cache on provider responses (cost + rate limits); longer cache on
-  routing results keyed by (origin, destination) since geometry is stable.
+- **Any-shul mode:** load qualifying shuls for the metro (filtered by denomination), query the
+  metro-area bounds, keep each listing whose **minimum distance to any qualifying shul** ≤
+  radius; annotate with that nearest shul.
+- **Caps & edge cases:** page provider results up to a sane cap; the ~500-result Zillow map cap
+  is a non-issue for walkable radii — only subdivide the box into tiles for ultra-dense pockets.
+- **Caching:** short-TTL (~15–60 min) server-side cache on provider responses keyed by (rounded
+  bounds, status, home_type, price/beds); longer cache on walk-time results (origin is a fixed
+  shul, listings recur → high hit rate; respect Routes caching ToS).
 
 ## 5. Data Model (Firestore)
 
 ### `shuls`
 ```
 id, name,
-denomination: { category: "Orthodox"|"Conservative"|"Reform"|"Reconstructionist"|"Nondenominational",
-                subtype?: "Modern Orthodox"|"Yeshivish"|"Chassidish"|"Sephardic"|"Chabad"|... },
+denomination: {
+  category: "Orthodox"|"Conservative"|"Reform"|"Reconstructionist"|"Nondenominational",
+  subtype?: "Modern Orthodox"|"Yeshivish"|"Chassidish"|"Sephardic"|"Chabad",
+  nusach?: "Ashkenaz"|"Sefard"|"Edot HaMizrach",   // optional Orthodox sub-signal
+  source: "osm"|"name-heuristic"|"movement-directory"|"admin",
+  confidence: "high"|"medium"|"low"
+},
 address, city, metro, state, zip,
 lat, lng, geohash,
 phone?, website?,
 flags?: { eruv?: boolean, dailyMinyan?: boolean },   // display-only in v1
-source: "google"|"osm"|"user"|"admin",
+googlePlaceId?,                                        // stored for LIVE lookup only; no other Google content persisted
+source: "osm"|"wikidata"|"user"|"admin",              // provenance of the stored record
 status: "active"|"archived",
-needsReview?: boolean,                                 // e.g. uncertain denomination
+needsReview?: boolean,                                 // low-confidence / known-gap → admin queue
 createdAt, updatedAt, verifiedBy?
 ```
+> **ToS compliance:** durable records are built from **OSM (ODbL) + Wikidata (CC0) + first-party
+> curation**. We persist Google's `place_id` only — never Google-sourced name/address/coords —
+> and refetch live via `place_id` when needed.
 
 ### `submissions`
 ```
 id, type: "new"|"edit"|"dispute",
-targetShulId?,                 // for edit/dispute
-payload,                       // proposed fields
-note?, submitterEmail?,
+targetShulId?, payload, note?, submitterEmail?,
 status: "pending"|"approved"|"rejected",
-reviewedBy?, reviewedAt?, reviewNote?,
-createdAt
+reviewedBy?, reviewedAt?, reviewNote?, createdAt
 ```
 
 ### `searches` (analytics)
 ```
-id, timestamp,
-metro, mode: "specific"|"any",
-shulId?, denominationFilter?,
-radius, listingType: "buy"|"rent",
-priceMin?, priceMax?, beds?, baths?, homeType?,
-resultCount, zeroResults: boolean,
-sessionId                       // anonymous
+id, timestamp, metro, mode: "specific"|"any",
+shulId?, denominationFilter?, radius,
+listingType: "buy"|"rent", priceMin?, priceMax?, beds?, baths?, homeType?,
+resultCount, zeroResults: boolean, sessionId
 ```
 
 ### `admins`
 ```
-{ email }                       // allowlist; may back custom claims later
+{ email }   // allowlist; backs the admin:true custom claim
 ```
 
-**Geo strategy:** per-metro shul counts are small (hundreds), so v1 loads a metro's shuls
-into memory (query by `metro`) and filters in-app — no geohash range queries needed yet.
-`geohash` is stored so we can move to `geofire`-style radius queries if scale demands.
+**Geo strategy:** per-metro shul counts are small (hundreds), so v1 loads a metro's shuls into
+memory (query by `metro`) and filters in-app. `geohash` is stored for a future `geofire` upgrade.
 
-## 6. Admin & Analytics
+## 6. Admin, Auth & Analytics
 
-- **Guard:** `/admin/*` protected server-side (Firebase Auth session + email allowlist),
-  not merely UI hiding.
-- **Moderation queue:** pending submissions; diff view for edits/disputes; approve applies
-  the change to `shuls` and stamps an audit trail; edit-then-approve; reject with reason.
-- **Analytics dashboard:** search volume over time, top metros, top shuls, popular radii,
-  and **zero-result searches** as the demand-gap signal (where users search but data is thin).
+- **Auth:** searchers use **Anonymous Auth** (never touch admin paths). Admins sign in with
+  Google → server mints a **session cookie** (`createSessionCookie`) → guarded by
+  `verifySessionCookie(cookie, true)` **in the Node runtime** (server component / route handler /
+  server action — the Admin SDK cannot run in Edge middleware). Authorization gated by a
+  **`admin:true` custom claim** + email allowlist. Admin SDK uses zero-arg init via Application
+  Default Credentials in a `server-only` singleton.
+- **Moderation queue:** pending submissions; diff view for edits/disputes; approve applies the
+  change to `shuls` and stamps an audit trail; edit-then-approve; reject with reason.
+- **Curation queue:** low-confidence / `needsReview` shuls surfaced for admin verification +
+  gap-filling.
+- **Analytics dashboard:** search volume over time, top metros, top shuls, popular radii, and
+  **zero-result searches** as the demand-gap signal.
 
-## 7. Seeding Pipeline
+## 7. Seeding & Data Pipeline
 
-A re-runnable script (not part of the request path). For each launch metro:
-1. Pull synagogues from **Google Places** (name, address, lat/lng, phone, website).
-2. Cross-fill from **OpenStreetMap Overpass** (`amenity=place_of_worship` + `religion=jewish`,
-   plus `denomination` tag where present).
-3. **Dedupe** by name + proximity; geocode any gaps.
-4. Best-guess **denomination** from name/OSM tags; set `needsReview` where uncertain.
-5. Write to `shuls` with `source` tags.
+Coverage strategy (chosen): **auto-seed + first-class admin curation + public crowdsourcing.**
+Ship with what we can legally auto-seed, make curation a first-class admin tool, let the
+community add/dispute, and do a manual cleanup pass on launch metros before go-live.
+
+Re-runnable pipeline (offline, not in the request path). For each launch metro:
+1. **Storable backbone:** pull Jewish places of worship from **OSM Overpass** (ODbL) —
+   `nwr["amenity"="place_of_worship"]["religion"="jewish"]({{bbox}})` (widen with
+   `building=synagogue`); optionally union **Wikidata** (CC0) for notable/historic congregations.
+2. **Discovery + `place_id`:** run **Google Places `synagogue`** search per metro to (a) discover
+   shuls missing from OSM and (b) attach a `place_id`. Persist only `place_id` + our own fields.
+3. **Dedup:** normalize names (strip diacritics/punctuation, expand abbreviations, unify
+   Beth/Beis/Bais/Beit, drop generic stopwords) → geoblock (~75–120 m dense, ~150 m else) → match
+   if fuzzy ≥~0.85 OR identical housenumber+street OR same website/phone → merge (OSM canonical) →
+   flag 0.70–0.85 for admin review.
+4. **Denomination pipeline:** (a) name heuristics (Chabad/Lubavitch→Chabad; Young Israel→Modern
+   Orthodox; Kollel/Yeshiva/Beis/Khal→Orthodox; Temple…/Reform→Reform); (b) cross-reference
+   name+geo against movement directories (URJ ~819 Reform, USCJ ~600 Conservative, OU/GoDaven for
+   Orthodox); (c) normalize OSM `denomination` values into the fixed enum. Store denomination
+   `source` + `confidence`; low-confidence → `needsReview`.
+5. **Attribution:** keep "© OpenStreetMap contributors" on stored/derived data; show "Google
+   Maps" attribution wherever live Google fields are displayed off-map.
 
 **Launch metros (~11):** Brooklyn, Queens, Five Towns/Nassau, Teaneck-Bergen NJ, Lakewood NJ,
-Passaic NJ, Monsey NY, Baltimore, Los Angeles, Miami/Boca Raton, Chicago. (Adding metros is
-cheap — re-run the script with a new metro definition.)
+Passaic NJ, Monsey NY, Baltimore, Los Angeles, Miami/Boca Raton, Chicago.
+
+**GoDaven/Chabad:** used as **on-screen human reference for admins only** — never bulk-scraped
+(their ToS prohibits it). A future data partnership is the path to shtiebel-level Orthodox depth.
 
 ## 8. Non-Goals (v1 / YAGNI)
 
-- No searcher accounts.
+- No searcher accounts (anonymous only).
 - No saved searches or email alerts.
-- No **walking-distance filter** — we filter by straight-line radius and only *display* walk
-  time/distance for shown results.
-- No persistence of provider listing data.
-- No payments.
-- No minyan-time scheduling.
-- US-only.
+- No **walking-distance filter** — filter by straight-line radius, only *display* walk time.
+- No persistence of provider listing data or of Google Places content (beyond `place_id`).
+- No scraping of GoDaven/Chabad/movement directories.
+- No payments, no minyan-time scheduling, US-only.
 
 ## 9. Risks & Mitigations
 
 | Risk | Mitigation |
 | --- | --- |
-| Unofficial Zillow RapidAPI is fragile / may change | Provider abstraction + a `MockListingsProvider`; monitor; swap-ready |
-| External API cost creep (Zillow, Google Maps) | Short-TTL caching, result caps, routing only for shown results, billing alerts |
-| Shul data quality / coverage gaps | Crowdsourced submissions + admin moderation; zero-result analytics surface gaps |
-| Denomination tagging incomplete | `needsReview` flag; admin fills; best-guess from name/OSM on seed |
-| Routing (Distance Matrix) cost | Only shown results (~20), cache by (origin, destination) |
+| Unofficial Zillow RapidAPI is fragile / could be taken down | Provider abstraction + `MockListingsProvider`; caching; retry/backoff; health check/failover; nightly canary |
+| Shul coverage gaps in Haredi metros (OSM under-counts) | First-class admin curation + public crowdsourcing; manual launch-metro pass; zero-result analytics surface gaps; optional GoDaven/Chabad partnership later |
+| Denomination incomplete / unreliable | Denomination pipeline (heuristics + movement-directory cross-ref + admin), stored with source + confidence; `needsReview` flag |
+| Google Maps free-tier cliff (~500 searches/mo) | Walk-time only for shown results; hard result cap; walk-time cache; billing alerts |
+| External API cost creep | Caching, result caps, budgets/alerts, referrer-restricted Maps key |
+| ODbL share-alike on derived DB | Acceptable for v1; revisit (lean more on CC0 Wikidata + first-party curation) if commercial terms tighten |
 
-## 10. Open Assumptions To Verify Before Implementation
+## 10. Verification Status & Residual Questions
 
-1. **Zillow RapidAPI capabilities** — the chosen endpoint must support **map-bounds /
-   coordinate queries** and return **per-listing lat/lng**, plus buy/rent + basic filters and
-   pagination. If not, fall back to city-search + client-side geocoding of results.
-2. **Firebase App Hosting + Next.js App Router** — current setup (`apphosting.yaml`, secret/
-   env handling, Firestore/Auth wiring) as of 2026.
-3. **Google Maps Platform** — Places usage for synagogue seeding + autocomplete; Distance
-   Matrix walking-mode limits and pricing; geocoding quotas.
-4. **OSM Overpass** — realistic denomination-tag coverage for Jewish places of worship in the
-   launch metros.
-
-These are verified during planning; findings feed the implementation plan.
+Section-10 assumptions from rev. 1.0 were verified (see technical-findings doc). The bounding-box
+pipeline, App Hosting fit, and Google Maps cost pattern are confirmed; shul-data architecture was
+revised accordingly (this doc). Residual items to confirm during implementation:
+1. Exact OpenWeb Ninja `/search/coordinates` parameter names + whether for-sale and for-rent
+   require separate calls (confirm in the RapidAPI playground before coding the box builder).
+2. Current Routes API caching ToS window (before building the walk-time cache).
+3. Whether the client renders an interactive map on every search (drives the browser Maps key).
