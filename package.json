@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "test:integration": "firebase emulators:exec --only firestore,auth --project demo-shulsearch \"vitest run --config test/integration/vitest.config.ts\"",
-    "seed:smoke": "tsx src/scripts/seed/smoke.ts"
+    "seed:smoke": "tsx src/scripts/seed/smoke.ts",
+    "seed": "tsx src/scripts/seed/index.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
