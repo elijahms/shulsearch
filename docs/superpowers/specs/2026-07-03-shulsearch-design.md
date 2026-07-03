@@ -45,7 +45,7 @@ which flow through an admin moderation queue.
 
 | Concern | Choice |
 | --- | --- |
-| Framework | **Next.js 15.x** (App Router, TypeScript), Node 20+ (`engines`) |
+| Framework | **Next.js 16** (App Router, TypeScript), Node 22 (`engines`) — owner chose newest; App Hosting may treat 16 as "preview" (see plan caveat) |
 | UI | **shadcn/ui** + Tailwind; collapsible-sidebar app shell |
 | Database | **Firestore** |
 | Auth | **Firebase Auth** — Google provider for admins (custom claim + allowlist); Anonymous auth for searchers |

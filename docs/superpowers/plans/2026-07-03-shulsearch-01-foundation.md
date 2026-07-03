@@ -3,43 +3,49 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development
 > (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use
 > checkbox (`- [ ]`) syntax for tracking.
+>
+> **Rev 1.1** — corrected after an adversarial verification pass (2026-07-03): pinned to the
+> owner's choice of **Next.js 16** (newest), fixed the `server-only`-under-Vitest blocker, the
+> jsdom `matchMedia` blocker, and the deployed client-config path. See inline notes.
 
-**Goal:** Stand up a deployed, tested Next.js 15 skeleton with the shadcn collapsible-sidebar
+**Goal:** Stand up a deployed, tested Next.js 16 skeleton with the shadcn collapsible-sidebar
 shell, Firebase client + admin SDK wiring, a Firestore-emulator test harness, App Hosting
 config, and CI — the foundation every later plan builds on.
 
-**Architecture:** Next.js 15 App Router (TypeScript, `src/` dir, `@/*` alias) on Firebase App
-Hosting. Firebase client SDK for the browser, a `server-only` Admin SDK singleton for the Node
-runtime. Tests run on Vitest; Firestore/Auth integration tests run against the local Firebase
-Emulator Suite so no cloud project is needed for the test loop.
+**Architecture:** Next.js 16 App Router (TypeScript, `src/` dir, `@/*` alias) on Firebase App
+Hosting. Firebase client SDK for the browser (driven by `NEXT_PUBLIC_FIREBASE_*` config), a
+`server-only` Admin SDK singleton for the Node runtime. Tests run on Vitest; Firestore/Auth
+integration tests run against the local Firebase Emulator Suite so no cloud project is needed
+for the test loop.
 
-**Tech Stack:** Next.js 15, React 19, TypeScript, Tailwind, shadcn/ui, Firebase (`firebase` +
+**Tech Stack:** Next.js 16, React 19, TypeScript, Tailwind, shadcn/ui, Firebase (`firebase` +
 `firebase-admin`), Firebase Emulator Suite, Vitest + Testing Library.
+
+> **App Hosting caveat (owner choice):** the 2026 verification found App Hosting treats Next 16
+> as "preview" while 15.x is "active". The owner chose newest (16); if the Task 11 deploy balks
+> on 16, pin `create-next-app@15 … --turbopack` and change the version references back.
 
 ---
 
 ## Prerequisites (owner — one-time, needs `elijahmsilverman@gmail.com`)
 
-These need your Google account and are done in a browser/CLI you own. The agent tasks below do
-**not** depend on these until **Task 11 (deploy)** — everything before Task 11 runs fully local
-against emulators.
+These need your Google account. The agent tasks below do **not** depend on these until
+**Task 11 (deploy)** — everything before Task 11 runs fully local against emulators. Firebase is
+driven by the CLI; the agent will ask you to run `! firebase login` when a login is required (it
+is **not** required for the local emulator).
 
 - [ ] **P1.** Create a Firebase project on the **Blaze** plan at <https://console.firebase.google.com>.
 - [ ] **P2.** In the project, **Add a Web App** and copy its config (apiKey, authDomain,
   projectId, appId, messagingSenderId, storageBucket).
 - [ ] **P3.** Enable **Firestore** (production mode) and **Authentication** (enable the **Google**
   and **Anonymous** providers).
-- [ ] **P4.** Install the CLIs locally and log in:
-  ```bash
-  npm install -g firebase-tools
-  firebase login          # in the session, prefix with `! ` so output lands here
-  ```
-- [ ] **P5.** (Deferred to later plans, note now) Enable Google Maps Platform APIs + create keys,
-  and subscribe to the OpenWeb Ninja RapidAPI — not needed until Plans 02–04.
+- [ ] **P4.** Log in the already-installed CLI (in-session, prefix with `! `): `firebase login`.
+- [ ] **P5.** (Deferred to later plans) Enable Google Maps Platform APIs + create keys, and
+  subscribe to the OpenWeb Ninja RapidAPI — not needed until Plans 02–04.
 
 ---
 
-## Task 1: Scaffold the Next.js 15 app into the existing repo
+## Task 1: Scaffold the Next.js 16 app into the existing repo
 
 `create-next-app` refuses a non-empty directory (our repo already has `docs/` + `.git`), so
 scaffold in a temp dir and copy in.
@@ -56,8 +62,9 @@ cd /Users/elijahsilverman/Development
 npx create-next-app@latest _ss_scaffold \
   --ts --tailwind --eslint --app --src-dir --import-alias "@/*" --use-npm
 ```
-Expected: prompts default through; a `_ss_scaffold/` app is created. (If it prompts for
-Turbopack, accept the default — Yes.)
+Expected: create-next-app 16 runs **fully non-interactively** — passing any flag forces
+skip-prompt, and Turbopack is the default bundler (no Turbopack prompt). A `_ss_scaffold/` app
+is created.
 
 - [ ] **Step 2: Copy generated files into the repo (preserving our `.git` and `docs/`)**
 
@@ -67,15 +74,18 @@ rsync -a --exclude='.git' /Users/elijahsilverman/Development/_ss_scaffold/ \
   /Users/elijahsilverman/Development/shulsearch/
 rm -rf /Users/elijahsilverman/Development/_ss_scaffold
 cd /Users/elijahsilverman/Development/shulsearch
+rm -f AGENTS.md CLAUDE.md   # create-next-app 16 generates these; unwanted (global ~/.claude/CLAUDE.md governs)
 ```
-Expected: `package.json`, `src/app/`, `next.config.ts` now exist in `shulsearch/`. The
-scaffold's `.gitignore` replaced ours — that's fine (Task 9 re-adds Firebase ignores).
+Expected: `package.json`, `src/app/`, `next.config.ts` now exist in `shulsearch/`; the generated
+`AGENTS.md`/`CLAUDE.md` are removed. The scaffold's `.gitignore` replaced ours — fine (Task 9
+re-adds Firebase ignores).
 
-- [ ] **Step 3: Install deps and verify typecheck + dev boot**
+- [ ] **Step 3: Install deps, pin the Node engine, verify typecheck**
 
 Run:
 ```bash
 npm install
+npm pkg set engines.node="22"   # match CI + App Hosting runtime (spec: Node 20+)
 npx tsc --noEmit
 ```
 Expected: `npm install` succeeds; `tsc --noEmit` exits 0 (no type errors).
@@ -93,7 +103,7 @@ Expected: prints `DEV_OK`. Kill any lingering dev server after.
 
 ```bash
 git add -A
-git commit -m "feat: scaffold Next.js 15 app (App Router, TS, Tailwind)"
+git commit -m "feat: scaffold Next.js 16 app (App Router, TS, Tailwind)"
 ```
 
 ---
@@ -107,10 +117,11 @@ git commit -m "feat: scaffold Next.js 15 app (App Router, TS, Tailwind)"
 
 - [ ] **Step 1: Install test deps**
 
-Run:
+`@testing-library/dom` is a required peer of `@testing-library/react` v16 (React 19) — install
+it explicitly so component tests resolve it under any resolver.
 ```bash
 npm install -D vitest @vitejs/plugin-react jsdom vite-tsconfig-paths \
-  @testing-library/react @testing-library/jest-dom @testing-library/user-event
+  @testing-library/dom @testing-library/react @testing-library/jest-dom @testing-library/user-event
 ```
 Expected: installs succeed.
 
@@ -134,17 +145,34 @@ export default defineConfig({
 })
 ```
 
-- [ ] **Step 3: Write `test/setup.ts`**
+- [ ] **Step 3: Write `test/setup.ts` (jest-dom matchers + a `matchMedia` mock)**
 
+shadcn's `SidebarProvider` calls `useIsMobile()` → `window.matchMedia`, which jsdom does not
+implement. Mock it here so every jsdom test has it.
 Create `test/setup.ts`:
 ```ts
 import '@testing-library/jest-dom/vitest'
+import { vi } from 'vitest'
+
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }),
+})
 ```
 
 - [ ] **Step 4: Add scripts to `package.json`**
 
-In `package.json` `"scripts"`, add (the emulator-backed `test:integration` script is added
-later, in Task 8, once the emulator config exists):
+In `package.json` `"scripts"`, add (the emulator-backed `test:integration` is added in Task 8,
+once the emulator config exists):
 ```json
 "test": "vitest run",
 "test:watch": "vitest",
@@ -191,7 +219,8 @@ Run:
 npx shadcn@latest init -d
 ```
 Expected: creates `components.json`, `src/lib/utils.ts`, and writes CSS variables into
-`src/app/globals.css`. (`-d` accepts defaults: neutral base color, CSS variables.)
+`src/app/globals.css`. (`-d`/`--defaults` runs non-interactively. If the CLI asks about React 19
+peer deps on npm, choose `--legacy-peer-deps`.)
 
 - [ ] **Step 2: Add the components the shell needs**
 
@@ -344,7 +373,8 @@ rm -f src/app/page.tsx
 - [ ] **Step 6: Verify build + typecheck**
 
 Run: `npm run typecheck && npx next build`
-Expected: type check clean; build succeeds and lists `/` and no duplicate-route error.
+Expected: type check clean; build succeeds and lists `/` with no duplicate-route error.
+(`(app)` route groups don't add to the URL, so `(app)/page.tsx` serves `/`.)
 
 - [ ] **Step 7: Commit**
 
@@ -411,8 +441,10 @@ git commit -m "feat: /api/health endpoint"
 
 ## Task 6: Firebase client SDK singleton (TDD)
 
-Reads config from the App-Hosting-injected `FIREBASE_WEBAPP_CONFIG` (JSON) in prod, falling back
-to `NEXT_PUBLIC_FIREBASE_*` env vars for local/other hosts. Returns a memoized app.
+Reads the public Firebase web config from `NEXT_PUBLIC_FIREBASE_*` env vars — inlined into the
+client bundle at build (via `apphosting.yaml` in prod, `.env.local` locally). Returns a memoized
+app. (`FIREBASE_WEBAPP_CONFIG` is build-time/server-only and unreadable in the browser, so we do
+not depend on it.)
 
 **Files:**
 - Create: `src/lib/firebase/client.ts`
@@ -431,26 +463,14 @@ describe('getFirebaseApp', () => {
     process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID = 'demo-shulsearch'
     process.env.NEXT_PUBLIC_FIREBASE_APP_ID = '1:1:web:abc'
     process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN = 'demo-shulsearch.firebaseapp.com'
-    delete process.env.FIREBASE_WEBAPP_CONFIG
   })
 
-  it('returns a memoized singleton', async () => {
+  it('returns a memoized singleton from NEXT_PUBLIC_ config', async () => {
     const { getFirebaseApp } = await import('./client')
     const a = getFirebaseApp()
     const b = getFirebaseApp()
     expect(a).toBe(b)
     expect(a.options.projectId).toBe('demo-shulsearch')
-  })
-
-  it('prefers FIREBASE_WEBAPP_CONFIG when present', async () => {
-    process.env.FIREBASE_WEBAPP_CONFIG = JSON.stringify({
-      apiKey: 'injected',
-      projectId: 'injected-project',
-      appId: '1:2:web:def',
-      authDomain: 'injected-project.firebaseapp.com',
-    })
-    const { getFirebaseApp } = await import('./client')
-    expect(getFirebaseApp().options.projectId).toBe('injected-project')
   })
 })
 ```
@@ -467,9 +487,6 @@ Create `src/lib/firebase/client.ts`:
 import { getApp, getApps, initializeApp, type FirebaseApp, type FirebaseOptions } from 'firebase/app'
 
 function readConfig(): FirebaseOptions {
-  if (process.env.FIREBASE_WEBAPP_CONFIG) {
-    return JSON.parse(process.env.FIREBASE_WEBAPP_CONFIG) as FirebaseOptions
-  }
   return {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
     authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -492,7 +509,7 @@ Run:
 npm install firebase
 npm test -- firebase/client
 ```
-Expected: PASS (both cases).
+Expected: PASS.
 
 - [ ] **Step 5: Commit**
 
@@ -546,8 +563,11 @@ export function getAdminDb(): Firestore {
 }
 ```
 
-Note: `server-only` throws if imported into a client bundle — the integration test imports it in
-a Node (non-jsdom) context, so it is safe there.
+Note: `import 'server-only'` throws in a plain Node/Vitest run (it resolves to a no-op only under
+the `react-server` bundler condition). Task 8's integration Vitest config therefore aliases
+`server-only` to an empty stub so this module is importable in tests. This admin singleton is
+implemented before its test because its behavior test needs the Task 8 emulator harness — a
+deliberate, one-off exception to the red-first order used in Tasks 5–6.
 
 - [ ] **Step 3: Verify typecheck (the behavior test lives in Task 8 under the emulator)**
 
@@ -567,7 +587,8 @@ git commit -m "feat: server-only firebase admin SDK singleton"
 
 **Files:**
 - Create: `firebase.json`, `.firebaserc`, `firestore.rules`, `firestore.indexes.json`,
-  `test/integration/vitest.config.ts`, `test/integration/admin.test.ts`
+  `test/integration/vitest.config.ts`, `test/integration/server-only-stub.ts`,
+  `test/integration/admin.test.ts`
 - Modify: `package.json` (integration script)
 
 - [ ] **Step 1: Write `firebase.json`**
@@ -611,15 +632,27 @@ Create `firestore.indexes.json`:
 { "indexes": [], "fieldOverrides": [] }
 ```
 
-- [ ] **Step 3: Write a dedicated integration vitest config (node env, includes only integration)**
+- [ ] **Step 3: Write the integration vitest config + a `server-only` stub**
 
-Create `test/integration/vitest.config.ts`:
+Create `test/integration/server-only-stub.ts`:
+```ts
+export {}
+```
+
+Create `test/integration/vitest.config.ts` (aliases `server-only` to the stub so `admin.ts` is
+importable in a plain Node test — `import 'server-only'` otherwise throws at import):
 ```ts
 import { defineConfig } from 'vitest/config'
 import tsconfigPaths from 'vite-tsconfig-paths'
+import { fileURLToPath } from 'node:url'
 
 export default defineConfig({
   plugins: [tsconfigPaths()],
+  resolve: {
+    alias: {
+      'server-only': fileURLToPath(new URL('./server-only-stub.ts', import.meta.url)),
+    },
+  },
   test: {
     environment: 'node',
     globals: true,
@@ -628,9 +661,9 @@ export default defineConfig({
 })
 ```
 
-- [ ] **Step 4: Replace the integration script in `package.json`**
+- [ ] **Step 4: Add the integration script to `package.json`** (deferred from Task 2)
 
-Set the script to run the emulator around the integration config:
+Add the script that runs the emulator around the integration config:
 ```json
 "test:integration": "firebase emulators:exec --only firestore,auth --project demo-shulsearch \"vitest run --config test/integration/vitest.config.ts\""
 ```
@@ -685,8 +718,9 @@ git commit -m "test: firestore emulator harness + admin smoke integration test"
 
 - [ ] **Step 1: Write `apphosting.yaml`**
 
-Create `apphosting.yaml` (public browser config as BUILD env now; secrets are added in later
-plans — commented so intent is captured):
+The public Firebase web config is safe to expose and must carry **BUILD** availability so Next.js
+inlines it into the client bundle. Replace the demo values with your real Web App config (P2).
+Create `apphosting.yaml`:
 ```yaml
 runConfig:
   minInstances: 0
@@ -696,11 +730,24 @@ runConfig:
   memoryMiB: 512
 
 env:
-  # Public Firebase web config is injected automatically as FIREBASE_WEBAPP_CONFIG by App
-  # Hosting; these NEXT_PUBLIC_* fallbacks are only needed if you self-inject. They must carry
-  # BUILD availability or they will not reach the client bundle.
+  # Public Firebase web config — safe to expose; BUILD availability = inlined into client bundle.
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: replace-me
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: demo-shulsearch.firebaseapp.com
+    availability: [BUILD, RUNTIME]
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
     value: demo-shulsearch
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: demo-shulsearch.appspot.com
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: replace-me
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: replace-me
     availability: [BUILD, RUNTIME]
 
   # --- Secrets added in later plans (Cloud Secret Manager) ---
@@ -793,7 +840,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
       - uses: actions/setup-java@v4
         with:
@@ -825,13 +872,13 @@ git commit -m "ci: typecheck, lint, unit + integration tests"
 Requires prereqs P1–P4. This proves the whole toolchain end-to-end on a real URL.
 
 **Files:**
-- Modify: `.firebaserc` (real project id), `apphosting.yaml` (real project id)
+- Modify: `.firebaserc` (real project id), `apphosting.yaml` (real Firebase web config values)
 
 - [ ] **Step 1: Point the repo at the real Firebase project**
 
-Set `.firebaserc` `default` and `apphosting.yaml`'s `NEXT_PUBLIC_FIREBASE_PROJECT_ID` to your
-real project id from prereq P1. Push the repo to a GitHub remote (owner: use the `elijahms`
-personal account per your setup).
+Set `.firebaserc` `default` and `apphosting.yaml`'s `NEXT_PUBLIC_FIREBASE_*` values to your real
+Web App config from prereqs P1–P2. Create a GitHub repo under the **elijahms** account and push
+(`gh` is already switched to elijahms; verify with `gh auth status`).
 
 - [ ] **Step 2: Create the App Hosting backend (owner runs; connects GitHub)**
 
@@ -843,11 +890,12 @@ Follow prompts: pick region, connect the GitHub repo, set the live branch to `ma
 
 - [ ] **Step 3: Trigger a rollout by pushing to the live branch**
 
-Run:
 ```bash
 git push origin main
 ```
-Expected: App Hosting builds + rolls out. Watch in Firebase console > App Hosting.
+Expected: App Hosting builds + rolls out. Watch in Firebase console > App Hosting. (If the build
+rejects Next 16 as unsupported, pin to `create-next-app@15 … --turbopack` per the caveat and
+re-scaffold, or set the Next version in package.json to the latest supported 15.x.)
 
 - [ ] **Step 4: Verify the live health endpoint**
 
