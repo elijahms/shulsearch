@@ -20,7 +20,14 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="px-2 py-1 text-lg font-semibold">ShulSearch</div>
+        <div className="px-2 py-1.5">
+          <div className="font-display text-xl font-semibold leading-none tracking-tight text-primary">
+            ShulSearch
+          </div>
+          <div className="mt-1 text-[11px] text-muted-foreground group-data-[collapsible=icon]:hidden">
+            homes within a walk of shul
+          </div>
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>

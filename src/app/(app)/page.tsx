@@ -1,3 +1,5 @@
+import { ShulExplorer } from '@/components/shul/shul-explorer'
+
 export default function SearchHome() {
-  return <p className="text-muted-foreground">Search coming soon.</p>
+  return <ShulExplorer />
 }

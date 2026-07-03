@@ -1,6 +1,12 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Shuls are public to read (anonymous searchers); writes only via Admin SDK (seed/admin).
+    match /shuls/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+    // Everything else stays locked (opened per-collection in later plans).
     match /{document=**} {
       allow read, write: if false;
     }

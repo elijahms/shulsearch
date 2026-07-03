@@ -5,12 +5,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>
-        <header className="flex h-14 items-center gap-2 border-b px-4">
+      <SidebarInset className="flex h-svh flex-col">
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-card/60 px-4 backdrop-blur">
           <SidebarTrigger />
-          <span className="font-medium">ShulSearch</span>
+          <span className="font-display text-lg font-semibold tracking-tight text-primary">ShulSearch</span>
         </header>
-        <main className="p-4">{children}</main>
+        <main className="min-h-0 flex-1">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   )
