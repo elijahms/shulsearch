@@ -1,17 +1,66 @@
 'use client'
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useTheme } from 'next-themes'
-import { Moon, Sun } from 'lucide-react'
+import { toast } from 'sonner'
+import { Moon, Sun, LogIn, LogOut, ShieldCheck, ChevronsUpDown } from 'lucide-react'
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  onAuthChange,
+  signInWithGoogle,
+  signOutUser,
+  isAdminEmail,
+  type User,
+} from '@/lib/auth/client'
 
 export function AppSidebarFooter() {
   const { resolvedTheme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
-  // Standard next-themes hydration guard (avoid SSR/client theme mismatch).
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => setMounted(true), [])
+  const [user, setUser] = useState<User | null>(null)
+
+  // Mount guard (theme + auth are client-only). onAuthChange fires asynchronously,
+  // so setUser inside its callback is not a synchronous set-state-in-effect.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true)
+    try {
+      return onAuthChange(setUser)
+    } catch {
+      // Firebase auth unavailable (e.g. missing config in a test env) — stay signed out.
+    }
+  }, [])
+
   const isDark = mounted && resolvedTheme === 'dark'
+
+  async function handleSignIn() {
+    try {
+      await signInWithGoogle()
+    } catch {
+      toast.error('Sign-in failed. Please try again.')
+    }
+  }
+
+  async function handleSignOut() {
+    try {
+      await signOutUser()
+      toast.success('Signed out')
+    } catch {
+      toast.error('Could not sign out.')
+    }
+  }
+
+  const displayName = user?.displayName || user?.email || 'Account'
+  const initial = (user?.displayName || user?.email || '?').charAt(0).toUpperCase()
+  const admin = isAdminEmail(user?.email)
 
   return (
     <SidebarMenu>
@@ -25,18 +74,71 @@ export function AppSidebarFooter() {
         </SidebarMenuButton>
       </SidebarMenuItem>
 
-      <SidebarMenuItem>
-        {/* Static profile for now — wired to Firebase Auth (Google admin) in Plan 06. */}
-        <SidebarMenuButton size="lg" tooltip="Admin" className="cursor-default">
-          <Avatar className="size-7 rounded-md">
-            <AvatarFallback className="rounded-md bg-primary text-xs text-primary-foreground">A</AvatarFallback>
-          </Avatar>
-          <div className="grid flex-1 text-left text-sm leading-tight">
-            <span className="truncate font-medium">Admin</span>
-            <span className="truncate text-xs text-muted-foreground">Signed in</span>
-          </div>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
+      {!mounted ? (
+        // Neutral placeholder keeps SSR/first-client render identical (no auth on the server).
+        <SidebarMenuItem>
+          <SidebarMenuButton size="lg" className="cursor-default">
+            <Avatar className="size-7 rounded-md">
+              <AvatarFallback className="rounded-md bg-muted text-xs">·</AvatarFallback>
+            </Avatar>
+            <div className="grid flex-1 text-left text-sm leading-tight">
+              <span className="truncate font-medium text-muted-foreground">Account</span>
+            </div>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      ) : user ? (
+        <SidebarMenuItem>
+          <DropdownMenu>
+            <DropdownMenuTrigger render={<SidebarMenuButton size="lg" />}>
+              <Avatar className="size-7 rounded-md">
+                {user.photoURL ? (
+                  <AvatarImage src={user.photoURL} alt={displayName} />
+                ) : null}
+                <AvatarFallback className="rounded-md bg-primary text-xs text-primary-foreground">
+                  {initial}
+                </AvatarFallback>
+              </Avatar>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-medium">{displayName}</span>
+                {user.email ? (
+                  <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+                ) : null}
+              </div>
+              <ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="right" align="end" sideOffset={8} className="min-w-56">
+              <DropdownMenuLabel>
+                <div className="grid text-left leading-tight">
+                  <span className="truncate font-medium">{displayName}</span>
+                  {user.email ? (
+                    <span className="truncate text-xs font-normal text-muted-foreground">
+                      {user.email}
+                    </span>
+                  ) : null}
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {admin ? (
+                <DropdownMenuItem render={<Link href="/admin" />}>
+                  <ShieldCheck />
+                  Admin
+                </DropdownMenuItem>
+              ) : null}
+              <DropdownMenuItem onClick={handleSignOut}>
+                <LogOut />
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarMenuItem>
+      ) : (
+        <SidebarMenuItem>
+          <SidebarMenuButton onClick={handleSignIn} tooltip="Sign in with Google">
+            <LogIn />
+            <span>Sign in</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      )}
     </SidebarMenu>
   )
 }
