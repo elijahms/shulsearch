@@ -6,7 +6,15 @@ service cloud.firestore {
       allow read: if true;
       allow write: if false;
     }
-    // Everything else stays locked (opened per-collection in later plans).
+
+    // Anyone can submit an add/edit/dispute (goes to the moderation queue). No public read/edit.
+    match /submissions/{id} {
+      allow create: if request.resource.data.status == 'pending'
+        && request.resource.data.type in ['new', 'edit', 'dispute'];
+      allow read, update, delete: if false;
+    }
+
+    // Everything else (searches analytics, admins, submission moderation) is Admin-SDK only.
     match /{document=**} {
       allow read, write: if false;
     }

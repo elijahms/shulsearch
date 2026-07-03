@@ -30,6 +30,10 @@ env:
   - variable: NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY
     value: AIzaSyBngDCyGb5VceAvdSFXoQrWa1H9piPiYQ0
     availability: [BUILD, RUNTIME]
+  # Admin allowlist (comma-separated Google account emails). Not secret.
+  - variable: ADMIN_EMAILS
+    value: elijahmsilverman@gmail.com
+    availability: [RUNTIME]
 
   # --- Server-side secrets (Cloud Secret Manager) ---
   - variable: GOOGLE_MAPS_SERVER_KEY
