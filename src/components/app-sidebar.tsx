@@ -3,6 +3,7 @@ import { Home, PlusCircle, MapPin } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -10,7 +11,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarRail,
 } from '@/components/ui/sidebar'
+import { AppSidebarFooter } from './app-sidebar-footer'
 
 const NAV = [
   { title: 'Search', href: '/', icon: Home },
@@ -31,6 +34,7 @@ export function AppSidebar() {
           </div>
         </div>
       </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Explore</SidebarGroupLabel>
@@ -48,6 +52,11 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter>
+        <AppSidebarFooter />
+      </SidebarFooter>
+      <SidebarRail />
     </Sidebar>
   )
 }

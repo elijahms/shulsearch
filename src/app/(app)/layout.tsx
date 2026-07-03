@@ -7,7 +7,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <AppSidebar />
       <SidebarInset className="flex h-svh flex-col">
         <header className="flex h-14 shrink-0 items-center gap-3 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
+          <SidebarTrigger className="-ml-1 md:hidden" />
           <div className="min-w-0">
             <h1 className="text-sm font-semibold leading-none">Find a shul</h1>
             <p className="mt-1 hidden truncate text-xs text-muted-foreground sm:block">

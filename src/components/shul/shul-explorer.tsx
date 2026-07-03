@@ -67,11 +67,20 @@ export function ShulExplorer() {
             className="rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="Metro"
           >
-            {METROS.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name}, {m.state}
-              </option>
-            ))}
+            <optgroup label="Established communities">
+              {METROS.filter((m) => m.tier === 1).map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}, {m.state}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Growing communities">
+              {METROS.filter((m) => m.tier === 2).map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}, {m.state}
+                </option>
+              ))}
+            </optgroup>
           </select>
           <span className="text-sm text-muted-foreground">
             {loading ? (

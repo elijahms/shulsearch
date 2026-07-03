@@ -59,8 +59,12 @@ async function seedMetro(db: Firestore, metro: Metro) {
 
 async function main() {
   const arg = process.argv[2]
-  const metros = arg ? [getMetro(arg)].filter((m): m is Metro => !!m) : METROS
-  if (metros.length === 0) throw new Error(`unknown metro: ${arg}`)
+  let metros: Metro[]
+  if (!arg) metros = METROS
+  else if (arg === 'tier1') metros = METROS.filter((m) => m.tier === 1)
+  else if (arg === 'tier2') metros = METROS.filter((m) => m.tier === 2)
+  else metros = [getMetro(arg)].filter((m): m is Metro => !!m)
+  if (metros.length === 0) throw new Error(`unknown metro/tier: ${arg}`)
   const target = process.env.FIRESTORE_EMULATOR_HOST ? 'EMULATOR' : 'REAL Firestore'
   console.log(`\nSeeding ${metros.length} metro(s) → ${target}\n`)
 
