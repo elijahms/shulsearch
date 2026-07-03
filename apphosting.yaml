@@ -34,6 +34,9 @@ env:
   - variable: ADMIN_EMAILS
     value: elijahmsilverman@gmail.com
     availability: [RUNTIME]
+  - variable: NEXT_PUBLIC_ADMIN_EMAILS
+    value: elijahmsilverman@gmail.com
+    availability: [BUILD, RUNTIME]
 
   # --- Server-side secrets (Cloud Secret Manager) ---
   - variable: GOOGLE_MAPS_SERVER_KEY
