@@ -57,7 +57,7 @@ export function ShulExplorer() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="shrink-0 border-b bg-card/60 px-4 py-3 backdrop-blur">
+      <div className="shrink-0 border-b bg-background px-4 py-3">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <select
             value={metroId}
@@ -90,8 +90,8 @@ export function ShulExplorer() {
                 className={cn(
                   'rounded-full border px-2.5 py-1 text-xs font-medium transition',
                   enabled.has(c)
-                    ? 'border-primary/30 bg-primary/10 text-primary'
-                    : 'border-border text-muted-foreground opacity-55 hover:opacity-100',
+                    ? 'border-foreground/15 bg-foreground/[0.06] text-foreground'
+                    : 'border-border text-muted-foreground hover:text-foreground',
                 )}
               >
                 {c}
@@ -102,7 +102,7 @@ export function ShulExplorer() {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col-reverse md:flex-row">
-        <aside className="flex max-h-[45%] min-h-0 flex-col overflow-y-auto border-t bg-card/40 md:max-h-none md:w-[360px] md:border-t-0 md:border-r">
+        <aside className="flex max-h-[45%] min-h-0 flex-col overflow-y-auto border-t bg-background md:max-h-none md:w-[360px] md:border-t-0 md:border-r">
           <ShulList shuls={filtered} selectedId={selectedId} onSelect={setSelectedId} />
         </aside>
         <div className="min-h-[280px] flex-1">
