@@ -43,7 +43,13 @@ async function seedMetro(db: Firestore, metro: Metro) {
     console.warn(`  ! Wikidata failed for ${metro.name}: ${String(e).slice(0, 120)}`)
   }
   const shuls = mergeToShuls(raws, metro.id, metro.state)
-  const written = await upsertShuls(db, shuls)
+  let written = 0
+  try {
+    // Retry writes with backoff (smooths IAM-grant propagation flakiness on a fresh SA).
+    written = await withRetry(() => upsertShuls(db, shuls), 4, 8000)
+  } catch (e) {
+    console.warn(`  ! Firestore write failed for ${metro.name}: ${String(e).slice(0, 120)}`)
+  }
   const review = shuls.filter((s) => s.needsReview).length
   console.log(
     `  ${metro.name.padEnd(28)} raw=${String(raws.length).padStart(3)}  unique=${String(shuls.length).padStart(3)}  written=${written}  needsReview=${review}`,
