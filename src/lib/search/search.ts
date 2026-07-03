@@ -2,43 +2,10 @@ import 'server-only'
 import { haversineMeters } from '../geo/geo'
 import { boundingBox, boundsAround } from '../geo/bbox'
 import { getListingsProvider } from '../listings/provider'
-import type { HomeType, Listing, ListingType } from '../listings/types'
 import { walkingTimes } from '../routes/walk'
+import type { SearchParams, SearchResult, SearchResultItem, ShulPoint } from './types'
 
-export interface ShulPoint {
-  id: string
-  name: string
-  lat: number
-  lng: number
-}
-
-export interface SearchParams {
-  /** One shul (specific mode) or many (any-shul mode, already denomination-filtered by the client). */
-  shuls: ShulPoint[]
-  radiusMeters: number
-  listingType: ListingType
-  priceMin?: number
-  priceMax?: number
-  bedsMin?: number
-  bathsMin?: number
-  homeType?: HomeType
-  maxResults?: number
-}
-
-export interface SearchResultItem extends Listing {
-  /** Straight-line meters to the nearest qualifying shul. */
-  distanceMeters: number
-  nearestShulId: string
-  nearestShulName: string
-  walkMeters?: number
-  walkSeconds?: number
-}
-
-export interface SearchResult {
-  items: SearchResultItem[]
-  total: number
-  provider: string
-}
+export type { SearchParams, SearchResult, SearchResultItem, ShulPoint }
 
 /** Core search: listings within a walk radius of a shul (or any of several shuls). */
 export async function searchHomes(params: SearchParams): Promise<SearchResult> {

@@ -1,5 +1,5 @@
-import { ShulExplorer } from '@/components/shul/shul-explorer'
+import { HomeSearch } from '@/components/search/home-search'
 
 export default function SearchHome() {
-  return <ShulExplorer />
+  return <HomeSearch />
 }
