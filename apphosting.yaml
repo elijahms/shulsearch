@@ -31,9 +31,17 @@ env:
     value: AIzaSyBngDCyGb5VceAvdSFXoQrWa1H9piPiYQ0
     availability: [BUILD, RUNTIME]
 
-  # --- Secrets added in later plans (Cloud Secret Manager) ---
-  # GOOGLE_MAPS_SERVER_KEY (Places/Routes/Geocoding) + RAPIDAPI_KEY are server-side secrets;
-  # wire them via `firebase apphosting:secrets:set` in Plan 03 when the search API uses them.
+  # --- Server-side secrets (Cloud Secret Manager) ---
+  - variable: GOOGLE_MAPS_SERVER_KEY
+    secret: google-maps-server-key
+    availability: [RUNTIME]
+  # To flip the search from mock data to real Zillow, create the secret + grant access, then
+  # uncomment the block below and redeploy:
+  #   printf '%s' "<YOUR_RAPIDAPI_KEY>" | gcloud secrets create rapidapi-key --data-file=- --project shulsearch-app --account elijahmsilverman@gmail.com
+  #   firebase apphosting:secrets:grantaccess rapidapi-key --backend shulsearch --project shulsearch-app
+  # - variable: RAPIDAPI_KEY
+  #   secret: rapidapi-key
+  #   availability: [RUNTIME]
   # - variable: RAPIDAPI_KEY
   #   secret: rapidapi-key
   #   availability: [RUNTIME]
