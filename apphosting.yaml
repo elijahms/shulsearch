@@ -1,0 +1,39 @@
+runConfig:
+  minInstances: 0
+  maxInstances: 4
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+
+env:
+  # Public Firebase web config — safe to expose; BUILD availability = inlined into client bundle.
+  # Replace the demo values with your real Web App config (Firebase console > Project settings).
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: replace-me
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: demo-shulsearch.firebaseapp.com
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: demo-shulsearch
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: demo-shulsearch.appspot.com
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: replace-me
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: replace-me
+    availability: [BUILD, RUNTIME]
+
+  # --- Secrets added in later plans (Cloud Secret Manager) ---
+  # - variable: RAPIDAPI_KEY
+  #   secret: rapidapi-key
+  #   availability: [RUNTIME]
+  # - variable: GOOGLE_MAPS_SERVER_KEY
+  #   secret: google-maps-server-key
+  #   availability: [RUNTIME]
+  # - variable: NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY
+  #   secret: google-maps-browser-key
+  #   availability: [BUILD]
