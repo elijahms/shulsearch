@@ -20,6 +20,8 @@ export function ShulExplorer() {
 
   useEffect(() => {
     let alive = true
+    // Intentional: show the loading state immediately when the metro changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
     getShulsByMetro(metroId)
       .then((rows) => {
