@@ -8,6 +8,10 @@
  * tagline so it stays zero-config (no per-metro font loading).
  */
 
+import { METRO_THEMES } from './metro-themes.generated'
+
+export { METRO_THEMES }
+
 export interface MetroTheme {
   /** Primary emphasis color (hex). Used for accented numbers, the CTA, highlights. */
   accent: string
@@ -36,32 +40,6 @@ export const DEFAULT_THEME: MetroTheme = {
   heroText: 'light',
   motif: '🕍',
   tagline: 'A place to call home, within a walk of shul.',
-}
-
-/**
- * Metro-specific overrides. Intentionally near-empty — dedicated styling agents
- * fill this in one metro at a time. The two entries below only demonstrate the
- * shape; anything not listed falls back to DEFAULT_THEME.
- */
-export const METRO_THEMES: Partial<Record<string, MetroTheme>> = {
-  'miami-boca-fl': {
-    accent: '#0e9aa7',
-    accentSoft: '#e4f6f7',
-    heroBackground: 'linear-gradient(120deg, #06b6d4 0%, #22d3ee 40%, #fb7185 100%)',
-    heroText: 'light',
-    motif: '🌴',
-    tagline: 'Sunshine, ocean breezes, and shul around the corner.',
-    pattern:
-      'repeating-linear-gradient(135deg, rgba(255,255,255,0.12) 0 2px, transparent 2px 14px)',
-  },
-  'brooklyn-ny': {
-    accent: '#c2410c',
-    accentSoft: '#fdece2',
-    heroBackground: 'linear-gradient(135deg, #0b0b0f 0%, #1c1c24 55%, #2c2c38 100%)',
-    heroText: 'light',
-    motif: '🌉',
-    tagline: 'Big-city energy, the deepest roots of any community.',
-  },
 }
 
 /** Resolve a metro's theme, falling back to the tasteful neutral default. */
