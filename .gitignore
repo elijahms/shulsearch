@@ -51,3 +51,6 @@ ui-debug.log
 .env
 .env.local
 !.env.example
+
+# NCES bulk data cache (seed:schools downloads/unzips into here)
+.data/
