@@ -18,6 +18,8 @@ export interface SearchParams {
   bathsMin?: number
   homeType?: HomeType
   maxResults?: number
+  /** Metro location string ("City, ST") for location-based listing providers. */
+  locationHint?: string
 }
 
 export interface SearchResultItem extends Listing {

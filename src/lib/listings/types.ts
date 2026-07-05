@@ -34,6 +34,8 @@ export interface ListingsQuery {
   bedsMin?: number
   bathsMin?: number
   homeType?: HomeType
+  /** Human location string ("City, ST") for location-based providers (bounds-based providers ignore it). */
+  locationHint?: string
 }
 
 /** Swappable listings source. All provider quirks live behind this one interface. */

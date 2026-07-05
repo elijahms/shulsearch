@@ -25,6 +25,7 @@ export async function searchHomes(params: SearchParams): Promise<SearchResult> {
     bedsMin: params.bedsMin,
     bathsMin: params.bathsMin,
     homeType: params.homeType,
+    locationHint: params.locationHint,
   })
 
   // Keep listings within the true circle radius of the nearest shul.

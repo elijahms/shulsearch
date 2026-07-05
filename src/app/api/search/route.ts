@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { FieldValue } from 'firebase-admin/firestore'
 import { searchHomes } from '@/lib/search/search'
 import { getAdminDb } from '@/lib/firebase/admin'
+import { getMetro, metroSearchLocation } from '@/lib/metros'
 
 export const runtime = 'nodejs'
 
@@ -32,6 +33,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'invalid request', issues: parsed.error.issues }, { status: 400 })
   }
   const p = parsed.data
+  const metro = p.metro ? getMetro(p.metro) : undefined
   const result = await searchHomes({
     shuls: p.shuls,
     radiusMeters: p.radiusMeters,
@@ -41,6 +43,7 @@ export async function POST(req: Request) {
     bedsMin: p.bedsMin,
     bathsMin: p.bathsMin,
     homeType: p.homeType,
+    locationHint: metro ? metroSearchLocation(metro) : undefined,
   })
   void logSearch(p, result.total)
   return NextResponse.json(result)

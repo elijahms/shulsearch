@@ -42,19 +42,9 @@ env:
   - variable: GOOGLE_MAPS_SERVER_KEY
     secret: google-maps-server-key
     availability: [RUNTIME]
-  # To flip the search from mock data to real Zillow, create the secret + grant access, then
-  # uncomment the block below and redeploy:
-  #   printf '%s' "<YOUR_RAPIDAPI_KEY>" | gcloud secrets create rapidapi-key --data-file=- --project shulsearch-app --account elijahmsilverman@gmail.com
+  # Zillow listings via RapidAPI (host real-estate-zillow-com.p.rapidapi.com). Secret managed with:
+  #   printf '%s' "<KEY>" | gcloud secrets create rapidapi-key --data-file=- --project shulsearch-app --account elijahmsilverman@gmail.com
   #   firebase apphosting:secrets:grantaccess rapidapi-key --backend shulsearch --project shulsearch-app
-  # - variable: RAPIDAPI_KEY
-  #   secret: rapidapi-key
-  #   availability: [RUNTIME]
-  # - variable: RAPIDAPI_KEY
-  #   secret: rapidapi-key
-  #   availability: [RUNTIME]
-  # - variable: GOOGLE_MAPS_SERVER_KEY
-  #   secret: google-maps-server-key
-  #   availability: [RUNTIME]
-  # - variable: NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY
-  #   secret: google-maps-browser-key
-  #   availability: [BUILD]
+  - variable: RAPIDAPI_KEY
+    secret: rapidapi-key
+    availability: [RUNTIME]

@@ -47,6 +47,23 @@ export function getMetro(id: string): Metro | undefined {
   return METROS.find((m) => m.id === id)
 }
 
+/** A handful of metros whose display name isn't a place Zillow recognizes. */
+const SEARCH_LOCATION_OVERRIDE: Record<string, string> = {
+  'five-towns-ny': 'Cedarhurst, NY',
+}
+
+/**
+ * A clean "City, ST" string for location-based listing providers (e.g. the Zillow
+ * RapidAPI adapter). Strips the "/ Area" or "(Neighborhood)" suffix from the display
+ * name; the search pipeline then haversine-filters the results to the true shul radius.
+ */
+export function metroSearchLocation(m: Metro): string {
+  const override = SEARCH_LOCATION_OVERRIDE[m.id]
+  if (override) return override
+  const city = m.name.split(/[/(]/)[0].trim()
+  return `${city}, ${m.state}`
+}
+
 /** Center point of a metro's bbox (for map initial view). */
 export function metroCenter(m: Metro): { lat: number; lng: number } {
   const [s, w, n, e] = m.bbox
