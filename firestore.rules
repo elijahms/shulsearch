@@ -7,6 +7,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Schools are public to read (anonymous searchers); writes only via Admin SDK (seed/admin).
+    match /schools/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Anyone can submit an add/edit/dispute (goes to the moderation queue). No public read/edit.
     match /submissions/{id} {
       allow create: if request.resource.data.status == 'pending'
