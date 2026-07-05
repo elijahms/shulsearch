@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 const NAV = [
   { href: '/admin', label: 'Moderation' },
   { href: '/admin/curation', label: 'Curation' },
+  { href: '/admin/analytics', label: 'Analytics' },
 ]
 
 function Centered({ children }: { children: ReactNode }) {
