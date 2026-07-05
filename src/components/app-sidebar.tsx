@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Home, PlusCircle, MapPin } from 'lucide-react'
+import { Home, PlusCircle, MapPin, Building2 } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -17,6 +17,7 @@ import { AppSidebarFooter } from './app-sidebar-footer'
 
 const NAV = [
   { title: 'Search', href: '/', icon: Home },
+  { title: 'Communities', href: '/metro', icon: Building2 },
   { title: 'Contribute', href: '/contribute', icon: PlusCircle },
 ]
 
