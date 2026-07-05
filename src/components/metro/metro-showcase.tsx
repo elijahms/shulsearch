@@ -8,6 +8,7 @@ import { metroTheme } from '@/lib/metros/theme'
 import { getShulsByMetro } from '@/lib/shuls/queries'
 import { MetroHero } from './metro-hero'
 import { HERO_OVERRIDES } from './heroes'
+import { SchoolsSection } from './schools-section'
 import { StatCard } from './stat-card'
 import { usd, num, pct, rateOrNone } from './format'
 
@@ -159,6 +160,10 @@ export function MetroShowcase({ id }: { id: string }) {
             </p>
           </div>
         )}
+
+        <div className="mt-12">
+          <SchoolsSection metroId={id} accent={theme.accent} />
+        </div>
 
         {/* CTA */}
         <div className="mt-12 flex flex-col items-start gap-4 rounded-2xl bg-card p-6 ring-1 ring-foreground/10 sm:flex-row sm:items-center sm:justify-between">
