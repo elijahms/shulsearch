@@ -3,6 +3,7 @@ import { getFirestore, doc, getDoc } from 'firebase/firestore'
 import { getFirebaseApp } from '@/lib/firebase/client'
 import { getIdToken } from '@/lib/auth/client'
 import type { Shul } from '@/lib/shuls/schema'
+import type { School } from '@/lib/schools/schema'
 import type { Submission } from '@/lib/submissions/schema'
 
 /** A submission doc as returned by the admin API (Timestamps serialized to ISO strings). */
@@ -14,6 +15,7 @@ export type AdminSubmission = Submission & {
 }
 
 export type ShulWithId = Shul & { id: string }
+export type SchoolWithId = School & { id: string }
 
 /** Fetch with the current user's Firebase ID token attached as a bearer credential. */
 export async function adminFetch(path: string, init?: RequestInit): Promise<Response> {
