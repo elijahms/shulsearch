@@ -69,3 +69,12 @@ export function metroCenter(m: Metro): { lat: number; lng: number } {
   const [s, w, n, e] = m.bbox
   return { lat: (s + n) / 2, lng: (w + e) / 2 }
 }
+
+/** The first metro whose bbox contains the point, or null. bbox = [south, west, north, east]. */
+export function metroForPoint(lat: number, lng: number): string | null {
+  for (const m of METROS) {
+    const [s, w, n, e] = m.bbox
+    if (lat >= s && lat <= n && lng >= w && lng <= e) return m.id
+  }
+  return null
+}
