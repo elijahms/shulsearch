@@ -2,6 +2,7 @@ import { METROS } from '@/lib/metros'
 import { getMetroFacts } from '@/lib/metros/facts'
 import { metroTheme } from '@/lib/metros/theme'
 import { MetroCard } from '@/components/metro/metro-card'
+import { SectionHead } from '@/components/metro/section-head'
 
 export const metadata = {
   title: 'Communities · ShulSearch',
@@ -9,32 +10,42 @@ export const metadata = {
 }
 
 const TIERS = [
-  { tier: 1 as const, label: 'Established communities' },
-  { tier: 2 as const, label: 'Growing communities' },
+  { tier: 1 as const, label: 'Established communities', delay: 'ql-d2' },
+  { tier: 2 as const, label: 'Growing communities', delay: 'ql-d3' },
 ]
 
 export default function CommunitiesPage() {
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="mx-auto w-full max-w-6xl px-4 py-8 md:py-10">
-        <header className="max-w-2xl space-y-1.5">
-          <h1 className="font-heading text-2xl font-semibold tracking-tight">Communities</h1>
-          <p className="text-sm text-muted-foreground">
-            Every launch metro at a glance — Jewish population, home prices, and taxes. Pick a
-            community to see the full picture, then search homes within a walk of shul.
+    <div className="h-full overflow-y-auto bg-background">
+      <div className="mx-auto w-full max-w-6xl px-6 pb-24 pt-12 sm:px-10 md:pt-16">
+        <header className="ql-fade ql-d1 max-w-2xl">
+          <h1 className="font-serif text-[clamp(2.5rem,6vw,3.75rem)] font-light leading-none tracking-[-0.02em]">
+            Communities
+          </h1>
+          <p className="mt-5 max-w-[46ch] font-serif text-lg font-light italic leading-normal text-foreground/70">
+            Every launch metro at a glance — Jewish population, home prices, and taxes — then
+            homes within a walk of shul.
           </p>
         </header>
 
-        {TIERS.map(({ tier, label }) => (
-          <section key={tier} className="mt-10">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</h2>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {METROS.filter((m) => m.tier === tier).map((m) => (
-                <MetroCard key={m.id} metro={m} facts={getMetroFacts(m.id)} theme={metroTheme(m.id)} />
-              ))}
-            </div>
-          </section>
-        ))}
+        {TIERS.map(({ tier, label, delay }) => {
+          const metros = METROS.filter((m) => m.tier === tier)
+          return (
+            <section key={tier} className={`ql-fade ${delay} mt-16 md:mt-20`}>
+              <SectionHead title={label} note={`${metros.length} metros`} />
+              <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {metros.map((m) => (
+                  <MetroCard
+                    key={m.id}
+                    metro={m}
+                    facts={getMetroFacts(m.id)}
+                    theme={metroTheme(m.id)}
+                  />
+                ))}
+              </div>
+            </section>
+          )
+        })}
       </div>
     </div>
   )
