@@ -13,8 +13,8 @@ function pinIcon(color: string, selected: boolean): string {
   const h = selected ? 40 : 30
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 22 30">` +
-    `<path d="M11 0C4.9 0 0 4.9 0 11c0 8 11 19 11 19s11-11 11-19C22 4.9 17.1 0 11 0z" fill="${color}" stroke="#faf7f0" stroke-width="1.5"/>` +
-    `<circle cx="11" cy="11" r="3.6" fill="#faf7f0"/></svg>`
+    `<path d="M11 0C4.9 0 0 4.9 0 11c0 8 11 19 11 19s11-11 11-19C22 4.9 17.1 0 11 0z" fill="${color}" stroke="#ffffff" stroke-width="1.5"/>` +
+    `<circle cx="11" cy="11" r="3.6" fill="#ffffff"/></svg>`
   return `data:image/svg+xml,${encodeURIComponent(svg)}`
 }
 
@@ -45,8 +45,10 @@ export function ShulMap({
 }) {
   if (!KEY) {
     return (
-      <div className="grid h-full place-items-center bg-muted text-sm text-muted-foreground">
-        Map key not configured.
+      <div className="grid h-full place-items-center bg-muted px-6 text-center">
+        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+          Map key not configured
+        </p>
       </div>
     )
   }

@@ -8,11 +8,31 @@ import type { SearchResultItem } from '@/lib/search/types'
 import { SearchMap } from './search-map'
 import { ListingsList } from './listings-list'
 import { ShulList } from '@/components/shul/shul-list'
+import { DenominationFilterPill } from '@/components/shul/denomination-badge'
 import { cn } from '@/lib/utils'
 
 const CATEGORIES = DenominationCategory.options
 const RADII = [0.5, 0.75, 1, 1.5] // miles
 const MILE = 1609.34
+
+/** Quiet hairline field shared by the toolbar controls. */
+const FIELD =
+  'h-9 rounded-[2px] border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring'
+
+/** A toolbar control under its small-caps micro-label. */
+function Control({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex min-w-0 flex-col gap-1.5">
+      <span
+        aria-hidden
+        className="text-[10px] font-medium uppercase leading-none tracking-[0.16em] text-muted-foreground"
+      >
+        {label}
+      </span>
+      {children}
+    </div>
+  )
+}
 
 export function HomeSearch() {
   const [metroId, setMetroId] = useState('teaneck-bergen-nj')
@@ -103,65 +123,73 @@ export function HomeSearch() {
 
   const segBtn = (active: boolean) =>
     cn(
-      'rounded px-2.5 py-1 text-xs font-medium capitalize transition',
-      active ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+      'px-3 text-xs font-medium capitalize transition-colors tabular-nums',
+      active ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground',
     )
 
   return (
     <div className="flex h-full flex-col">
-      <div className="shrink-0 space-y-2 border-b bg-background px-4 py-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <select
-            value={metroId}
-            onChange={(e) => setMetroId(e.target.value)}
-            aria-label="Metro"
-            className="rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <optgroup label="Established communities">
-              {METROS.filter((m) => m.tier === 1).map((m) => (
-                <option key={m.id} value={m.id}>{m.name}, {m.state}</option>
+      <div className="ql-fade ql-d1 shrink-0 space-y-3 border-b border-border bg-background px-4 py-3.5 sm:px-5">
+        <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
+          <Control label="Community">
+            <select
+              value={metroId}
+              onChange={(e) => setMetroId(e.target.value)}
+              aria-label="Metro"
+              className={cn(FIELD, 'font-medium')}
+            >
+              <optgroup label="Established communities">
+                {METROS.filter((m) => m.tier === 1).map((m) => (
+                  <option key={m.id} value={m.id}>{m.name}, {m.state}</option>
+                ))}
+              </optgroup>
+              <optgroup label="Growing communities">
+                {METROS.filter((m) => m.tier === 2).map((m) => (
+                  <option key={m.id} value={m.id}>{m.name}, {m.state}</option>
+                ))}
+              </optgroup>
+            </select>
+          </Control>
+
+          <Control label="Near shul">
+            <select
+              value={nearShulId}
+              onChange={(e) => setNearShulId(e.target.value)}
+              aria-label="Near which shul"
+              className={cn(FIELD, 'min-w-0 max-w-[220px]')}
+            >
+              <option value="any">Any shul (filtered)</option>
+              {filteredShuls.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
               ))}
-            </optgroup>
-            <optgroup label="Growing communities">
-              {METROS.filter((m) => m.tier === 2).map((m) => (
-                <option key={m.id} value={m.id}>{m.name}, {m.state}</option>
+            </select>
+          </Control>
+
+          <Control label="Radius">
+            <div className="inline-flex h-9 items-stretch divide-x divide-border overflow-hidden rounded-[2px] border border-input">
+              {RADII.map((r) => (
+                <button key={r} type="button" onClick={() => setRadiusMi(r)} className={segBtn(radiusMi === r)}>
+                  {r} mi
+                </button>
               ))}
-            </optgroup>
-          </select>
+            </div>
+          </Control>
 
-          <select
-            value={nearShulId}
-            onChange={(e) => setNearShulId(e.target.value)}
-            aria-label="Near which shul"
-            className="min-w-0 max-w-[220px] rounded-md border border-input bg-background px-3 py-1.5 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <option value="any">Any shul (filtered)</option>
-            {filteredShuls.map((s) => (
-              <option key={s.id} value={s.id}>{s.name}</option>
-            ))}
-          </select>
-
-          <div className="inline-flex items-center gap-1 rounded-md border bg-muted p-0.5">
-            {RADII.map((r) => (
-              <button key={r} type="button" onClick={() => setRadiusMi(r)} className={segBtn(radiusMi === r)}>
-                {r} mi
-              </button>
-            ))}
-          </div>
-
-          <div className="inline-flex items-center gap-1 rounded-md border bg-muted p-0.5">
-            {(['buy', 'rent'] as const).map((t) => (
-              <button key={t} type="button" onClick={() => setListingType(t)} className={segBtn(listingType === t)}>
-                {t}
-              </button>
-            ))}
-          </div>
+          <Control label="Market">
+            <div className="inline-flex h-9 items-stretch divide-x divide-border overflow-hidden rounded-[2px] border border-input">
+              {(['buy', 'rent'] as const).map((t) => (
+                <button key={t} type="button" onClick={() => setListingType(t)} className={segBtn(listingType === t)}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          </Control>
 
           <button
             type="button"
             onClick={runSearch}
             disabled={searching || loadingShuls}
-            className="ml-auto rounded-md bg-primary px-3.5 py-1.5 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-50"
+            className="ml-auto h-9 rounded-[2px] bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
           >
             {searching ? 'Searching…' : 'Search homes'}
           </button>
@@ -170,46 +198,41 @@ export function HomeSearch() {
         {present.length > 1 && (
           <div className="flex flex-wrap gap-1.5">
             {present.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => toggle(c)}
-                className={cn(
-                  'rounded-full border px-2.5 py-1 text-xs font-medium transition',
-                  enabled.has(c)
-                    ? 'border-foreground/15 bg-foreground/[0.06] text-foreground'
-                    : 'border-border text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {c}
-              </button>
+              <DenominationFilterPill key={c} category={c} active={enabled.has(c)} onClick={() => toggle(c)} />
             ))}
           </div>
         )}
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col-reverse md:flex-row">
-        <aside className="flex max-h-[45%] min-h-0 flex-col overflow-y-auto border-t bg-background md:max-h-none md:w-[380px] md:border-t-0 md:border-r">
-          <div className="sticky top-0 z-10 shrink-0 border-b bg-background/95 px-4 py-2 text-sm text-muted-foreground backdrop-blur">
+        <aside className="ql-fade ql-d2 flex max-h-[45%] min-h-0 flex-col overflow-y-auto border-t border-border bg-background md:max-h-none md:w-[380px] md:border-t-0 md:border-r">
+          <div className="sticky top-0 z-10 shrink-0 border-b border-border bg-background/95 px-4 py-2.5 backdrop-blur">
             {results ? (
-              <>
-                <span className="font-semibold text-foreground">{results.length}</span>{' '}
-                {listingType === 'rent' ? 'rentals' : 'homes'} within {radiusMi} mi
+              <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                <span className="text-foreground tabular-nums">{results.length}</span>{' '}
+                {listingType === 'rent' ? 'rentals' : 'homes'} · within{' '}
+                <span className="tabular-nums">{radiusMi}</span> mi
                 {provider === 'mock' && ' · sample data'}
-              </>
+              </p>
             ) : loadingShuls ? (
-              'Loading shuls…'
+              <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                Loading shuls…
+              </p>
             ) : (
-              <>Pick a shul below (or search “any”), then <span className="font-medium text-foreground">Search homes</span></>
+              <p className="text-[13px] text-muted-foreground">
+                Pick a shul below (or search “any”), then{' '}
+                <span className="font-medium text-foreground">Search homes</span>
+              </p>
             )}
           </div>
-          {error && <div className="px-4 py-2 text-sm text-destructive">{error}</div>}
+          {error && <div className="px-4 py-2.5 text-[13px] text-destructive">{error}</div>}
           {results ? (
             results.length > 0 ? (
               <ListingsList items={results} selectedId={selectedListingId} onSelect={setSelectedListingId} />
             ) : (
-              <p className="px-4 py-10 text-center text-sm text-muted-foreground">
-                No {listingType === 'rent' ? 'rentals' : 'homes'} within {radiusMi} mi — try a larger radius.
+              <p className="px-6 py-14 text-center font-serif text-[0.95rem] font-light italic leading-relaxed text-muted-foreground">
+                No {listingType === 'rent' ? 'rentals' : 'homes'} within {radiusMi} mi — try a
+                larger radius.
               </p>
             )
           ) : (
@@ -217,7 +240,7 @@ export function HomeSearch() {
           )}
         </aside>
 
-        <div className="min-h-[280px] flex-1">
+        <div className="ql-fade ql-d3 min-h-[280px] flex-1">
           <SearchMap
             metro={metro}
             shuls={filteredShuls}

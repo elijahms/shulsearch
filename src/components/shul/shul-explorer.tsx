@@ -5,7 +5,7 @@ import { getShulsByMetro, type ShulDoc } from '@/lib/shuls/queries'
 import { DenominationCategory, type DenominationCategoryT } from '@/lib/shuls/schema'
 import { ShulMap } from './shul-map'
 import { ShulList } from './shul-list'
-import { cn } from '@/lib/utils'
+import { DenominationFilterPill } from './denomination-badge'
 
 const CATEGORIES = DenominationCategory.options
 
@@ -59,64 +59,60 @@ export function ShulExplorer() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="shrink-0 border-b bg-background px-4 py-3">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <select
-            value={metroId}
-            onChange={(e) => setMetroId(e.target.value)}
-            className="rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label="Metro"
-          >
-            <optgroup label="Established communities">
-              {METROS.filter((m) => m.tier === 1).map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}, {m.state}
-                </option>
-              ))}
-            </optgroup>
-            <optgroup label="Growing communities">
-              {METROS.filter((m) => m.tier === 2).map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}, {m.state}
-                </option>
-              ))}
-            </optgroup>
-          </select>
-          <span className="text-sm text-muted-foreground">
+      <div className="ql-fade ql-d1 shrink-0 border-b border-border bg-background px-4 py-3.5 sm:px-5">
+        <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
+          <div className="flex min-w-0 flex-col gap-1.5">
+            <span
+              aria-hidden
+              className="text-[10px] font-medium uppercase leading-none tracking-[0.16em] text-muted-foreground"
+            >
+              Community
+            </span>
+            <select
+              value={metroId}
+              onChange={(e) => setMetroId(e.target.value)}
+              className="h-9 rounded-[2px] border border-input bg-background px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="Metro"
+            >
+              <optgroup label="Established communities">
+                {METROS.filter((m) => m.tier === 1).map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}, {m.state}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Growing communities">
+                {METROS.filter((m) => m.tier === 2).map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}, {m.state}
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+          </div>
+          <span className="self-end pb-2 text-[13px] leading-none text-muted-foreground">
             {loading ? (
               'Loading…'
             ) : (
               <>
-                <span className="font-semibold text-foreground">{filtered.length}</span> shul
-                {filtered.length === 1 ? '' : 's'} within a walk
+                <span className="font-medium text-foreground tabular-nums">{filtered.length}</span>{' '}
+                shul{filtered.length === 1 ? '' : 's'} within a walk
               </>
             )}
           </span>
-          <div className="ml-auto flex flex-wrap gap-1.5">
+          <div className="ml-auto flex flex-wrap gap-1.5 self-end pb-1">
             {present.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => toggle(c)}
-                className={cn(
-                  'rounded-full border px-2.5 py-1 text-xs font-medium transition',
-                  enabled.has(c)
-                    ? 'border-foreground/15 bg-foreground/[0.06] text-foreground'
-                    : 'border-border text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {c}
-              </button>
+              <DenominationFilterPill key={c} category={c} active={enabled.has(c)} onClick={() => toggle(c)} />
             ))}
           </div>
         </div>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col-reverse md:flex-row">
-        <aside className="flex max-h-[45%] min-h-0 flex-col overflow-y-auto border-t bg-background md:max-h-none md:w-[360px] md:border-t-0 md:border-r">
+        <aside className="ql-fade ql-d2 flex max-h-[45%] min-h-0 flex-col overflow-y-auto border-t border-border bg-background md:max-h-none md:w-[360px] md:border-t-0 md:border-r">
           <ShulList shuls={filtered} selectedId={selectedId} onSelect={setSelectedId} />
         </aside>
-        <div className="min-h-[280px] flex-1">
+        <div className="ql-fade ql-d3 min-h-[280px] flex-1">
           <ShulMap metro={metro} shuls={filtered} selectedId={selectedId} onSelect={setSelectedId} />
         </div>
       </div>

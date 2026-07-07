@@ -19,11 +19,23 @@ function shulPin(color: string, highlighted: boolean): string {
   )
 }
 
+/**
+ * Quiet Luxe price marker — a hairline white bubble with slate-navy ink; the
+ * selected listing flips to the tekhelet accent. Drawn as one path (bubble +
+ * tail) so the hairline stroke stays seamless.
+ */
 function priceBubble(label: string, selected: boolean): string {
-  const w = 22 + label.length * 7.5
-  const bg = selected ? '#111827' : '#0f5132'
+  const w = Math.round(22 + label.length * 7.2)
+  const bh = 20 // bubble bottom edge; tail drops to bh + 7
+  const cx = w / 2
+  const bg = selected ? '#3b4a82' : '#ffffff'
+  const line = selected ? '#ffffff' : '#b8bdc9'
+  const ink = selected ? '#ffffff' : '#151821'
+  const d =
+    `M5 1H${w - 5}Q${w - 1} 1 ${w - 1} 5V${bh - 4}Q${w - 1} ${bh} ${w - 5} ${bh}` +
+    `H${cx + 5}L${cx} ${bh + 7}L${cx - 5} ${bh}H5Q1 ${bh} 1 ${bh - 4}V5Q1 1 5 1Z`
   return dataUri(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="30" viewBox="0 0 ${w} 30"><rect x="1" y="1" rx="9" ry="9" width="${w - 2}" height="21" fill="${bg}" stroke="#fff" stroke-width="1.5"/><path d="M${w / 2 - 5} 21 L${w / 2} 28 L${w / 2 + 5} 21 Z" fill="${bg}"/><text x="${w / 2}" y="16" font-family="system-ui,-apple-system,sans-serif" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">${label}</text></svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="29" viewBox="0 0 ${w} 29"><path d="${d}" fill="${bg}" stroke="${line}" stroke-width="${selected ? 1.5 : 1}"/><text x="${cx}" y="14.4" font-family="system-ui,-apple-system,sans-serif" font-size="11" font-weight="600" fill="${ink}" text-anchor="middle">${label}</text></svg>`,
   )
 }
 
@@ -63,8 +75,10 @@ export function SearchMap({
 }) {
   if (!KEY) {
     return (
-      <div className="grid h-full place-items-center bg-muted text-sm text-muted-foreground">
-        Map key not configured.
+      <div className="grid h-full place-items-center bg-muted px-6 text-center">
+        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+          Map key not configured
+        </p>
       </div>
     )
   }

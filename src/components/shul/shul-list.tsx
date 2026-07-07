@@ -19,7 +19,11 @@ export function ShulList({
   }, [selectedId])
 
   if (shuls.length === 0) {
-    return <p className="px-4 py-10 text-center text-sm text-muted-foreground">No shuls match this filter.</p>
+    return (
+      <p className="px-6 py-14 text-center font-serif text-[0.95rem] font-light italic leading-relaxed text-muted-foreground">
+        No shuls match this filter.
+      </p>
+    )
   }
 
   return (
@@ -30,23 +34,26 @@ export function ShulList({
             type="button"
             onClick={() => onSelect?.(s.id)}
             className={cn(
-              'w-full px-4 py-3 text-left transition-colors hover:bg-secondary/70',
-              s.id === selectedId && 'bg-secondary',
+              'relative w-full px-4 py-3.5 text-left transition-colors hover:bg-muted/50',
+              s.id === selectedId && 'bg-accent',
             )}
           >
+            {s.id === selectedId && (
+              <span className="absolute inset-y-0 left-0 w-0.5 bg-primary" aria-hidden />
+            )}
             <div className="flex items-start justify-between gap-3">
-              <span className="font-medium leading-snug text-foreground">{s.name}</span>
+              <span className="text-[15px] font-medium leading-snug text-foreground">{s.name}</span>
               {s.needsReview && (
                 <span
                   title="Denomination auto-guessed — pending review"
-                  className="mt-0.5 shrink-0 text-[10px] font-medium uppercase tracking-wider text-accent-foreground/60"
+                  className="mt-1 shrink-0 text-[9px] font-medium uppercase tracking-[0.14em] text-muted-foreground/70"
                 >
                   unverified
                 </span>
               )}
             </div>
-            {s.address && <p className="mt-0.5 text-xs text-muted-foreground">{s.address}</p>}
-            <div className="mt-1.5">
+            {s.address && <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{s.address}</p>}
+            <div className="mt-2">
               <DenominationBadge d={s.denomination} />
             </div>
           </button>
