@@ -1,6 +1,6 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
-import { Inbox, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { adminFetch, type AdminSubmission } from './api'
 import { SubmissionCard } from './submission-card'
 
@@ -29,29 +29,32 @@ export function ModerationQueue() {
   }, [])
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4">
-      <div>
-        <h2 className="text-lg font-semibold">Moderation queue</h2>
-        <p className="text-sm text-muted-foreground">
+    <div className="mx-auto flex max-w-3xl flex-col gap-7">
+      <header className="ql-fade ql-d1">
+        <h2 className="font-serif text-3xl font-light tracking-[-0.01em]">Moderation queue</h2>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           Community submissions awaiting review. Approving writes to the live directory.
         </p>
-      </div>
+      </header>
 
-      {error ? (
-        <p className="text-sm text-destructive">{error}</p>
-      ) : items === null ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
-          Loading…
-        </div>
-      ) : items.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-12 text-center text-muted-foreground">
-          <Inbox className="size-6" />
-          <p className="text-sm">No pending submissions.</p>
-        </div>
-      ) : (
-        items.map((s) => <SubmissionCard key={s.id} submission={s} onResolved={onResolved} />)
-      )}
+      <div className="ql-fade ql-d2 flex flex-col gap-5">
+        {error ? (
+          <p className="text-sm text-destructive">{error}</p>
+        ) : items === null ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" />
+            Loading…
+          </div>
+        ) : items.length === 0 ? (
+          <div className="border border-border px-8 py-16 text-center">
+            <p className="font-serif text-lg font-light italic text-muted-foreground">
+              No pending submissions.
+            </p>
+          </div>
+        ) : (
+          items.map((s) => <SubmissionCard key={s.id} submission={s} onResolved={onResolved} />)
+        )}
+      </div>
     </div>
   )
 }

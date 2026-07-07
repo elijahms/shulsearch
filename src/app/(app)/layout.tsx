@@ -6,14 +6,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset className="flex h-svh flex-col">
-        <header className="flex h-14 shrink-0 items-center gap-3 border-b px-4">
+        {/* Quiet chrome bar — hairline-ruled, wordmark on mobile, strapline on desktop. */}
+        <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background px-4 sm:px-6">
           <SidebarTrigger className="-ml-1 md:hidden" />
-          <div className="min-w-0">
-            <h1 className="text-sm font-semibold leading-none">Find a shul</h1>
-            <p className="mt-1 hidden truncate text-xs text-muted-foreground sm:block">
-              Homes within a walk of shul — choose a metro to explore
-            </p>
-          </div>
+          <span className="font-serif text-[1.05rem] font-medium leading-none md:hidden">
+            Shul<span className="text-primary">Search</span>
+          </span>
+          <p className="hidden text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground md:block">
+            Homes within a walk of shul
+          </p>
         </header>
         <main className="min-h-0 flex-1">{children}</main>
       </SidebarInset>

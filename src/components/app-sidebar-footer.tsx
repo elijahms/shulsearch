@@ -78,8 +78,8 @@ export function AppSidebarFooter() {
         // Neutral placeholder keeps SSR/first-client render identical (no auth on the server).
         <SidebarMenuItem>
           <SidebarMenuButton size="lg" className="cursor-default">
-            <Avatar className="size-7 rounded-md">
-              <AvatarFallback className="rounded-md bg-muted text-xs">·</AvatarFallback>
+            <Avatar className="size-7 rounded-[2px]">
+              <AvatarFallback className="rounded-[2px] bg-muted text-xs">·</AvatarFallback>
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-medium text-muted-foreground">Account</span>
@@ -90,11 +90,11 @@ export function AppSidebarFooter() {
         <SidebarMenuItem>
           <DropdownMenu>
             <DropdownMenuTrigger render={<SidebarMenuButton size="lg" />}>
-              <Avatar className="size-7 rounded-md">
+              <Avatar className="size-7 rounded-[2px]">
                 {user.photoURL ? (
                   <AvatarImage src={user.photoURL} alt={displayName} />
                 ) : null}
-                <AvatarFallback className="rounded-md bg-primary text-xs text-primary-foreground">
+                <AvatarFallback className="rounded-[2px] bg-primary text-xs text-primary-foreground">
                   {initial}
                 </AvatarFallback>
               </Avatar>

@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState, type ReactNode } from 'react'
-import { Loader2, LogIn, ShieldAlert, ShieldCheck } from 'lucide-react'
+import { Loader2, LogIn } from 'lucide-react'
 import { onAuthChange, signInWithGoogle, isAdminEmail, type User } from '@/lib/auth/client'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -16,6 +16,19 @@ const NAV = [
 
 function Centered({ children }: { children: ReactNode }) {
   return <div className="flex h-full items-center justify-center p-6">{children}</div>
+}
+
+/** Quiet typographic auth-gate screen: eyebrow, serif title, muted body. */
+function Gate({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="ql-fade ql-d1 flex max-w-sm flex-col items-center gap-3 text-center">
+      <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        ShulSearch · Admin
+      </p>
+      <h2 className="font-serif text-3xl font-light tracking-[-0.01em]">{title}</h2>
+      {children}
+    </div>
+  )
 }
 
 /** Client auth gate + admin sub-nav. Renders children only for an allowlisted admin. */
@@ -48,15 +61,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
   if (!user) {
     return (
       <Centered>
-        <div className="flex max-w-sm flex-col items-center gap-3 text-center">
-          <ShieldCheck className="size-8 text-muted-foreground" />
-          <h2 className="text-base font-semibold">Admin access</h2>
-          <p className="text-sm text-muted-foreground">Sign in with Google to access admin.</p>
-          <Button onClick={() => void signInWithGoogle()}>
+        <Gate title="Admin access">
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Sign in with Google to access admin.
+          </p>
+          <Button className="mt-2" onClick={() => void signInWithGoogle()}>
             <LogIn />
             Sign in with Google
           </Button>
-        </div>
+        </Gate>
       </Centered>
     )
   }
@@ -64,36 +77,43 @@ export function AdminShell({ children }: { children: ReactNode }) {
   if (!isAdminEmail(user.email)) {
     return (
       <Centered>
-        <div className="flex max-w-sm flex-col items-center gap-3 text-center">
-          <ShieldAlert className="size-8 text-destructive" />
-          <h2 className="text-base font-semibold">Not authorized</h2>
-          <p className="text-sm text-muted-foreground">
+        <Gate title="Not authorized">
+          <p className="text-sm leading-relaxed text-muted-foreground">
             {user.email ?? 'This account'} is not an admin.
           </p>
-        </div>
+        </Gate>
       </Centered>
     )
   }
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex shrink-0 items-center gap-1 border-b px-4 py-2">
+      {/* Back-office sub-nav — small caps, hairline underline marks the active page. */}
+      <nav className="flex shrink-0 items-stretch gap-6 overflow-x-auto border-b border-border px-4 sm:px-6">
+        <span className="shrink-0 py-3.5 text-[11px] font-semibold uppercase tracking-[0.18em]">
+          Admin
+        </span>
+        <span className="my-3.5 w-px shrink-0 bg-border" aria-hidden />
         {NAV.map((item) => {
           const active = pathname === item.href
           return (
-            <Button
+            <Link
               key={item.href}
-              variant={active ? 'secondary' : 'ghost'}
-              size="sm"
-              render={<Link href={item.href} />}
-              className={cn(!active && 'text-muted-foreground')}
+              href={item.href}
+              aria-current={active ? 'page' : undefined}
+              className={cn(
+                'shrink-0 whitespace-nowrap border-b py-3.5 text-[11px] font-medium uppercase tracking-[0.16em] transition-colors',
+                active
+                  ? 'border-foreground text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground',
+              )}
             >
               {item.label}
-            </Button>
+            </Link>
           )
         })}
-      </div>
-      <div className="min-h-0 flex-1 overflow-y-auto p-4">{children}</div>
+      </nav>
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-8 sm:px-6">{children}</div>
     </div>
   )
 }

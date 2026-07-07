@@ -10,7 +10,8 @@ describe('AppSidebar', () => {
         <AppSidebar />
       </SidebarProvider>,
     )
-    expect(screen.getByText('ShulSearch')).toBeInTheDocument()
+    // The wordmark renders as Shul<span>Search</span>; match on the composed text.
+    expect(screen.getByText((_, el) => el?.textContent === 'ShulSearch')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /search/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /contribute/i })).toBeInTheDocument()
   })
