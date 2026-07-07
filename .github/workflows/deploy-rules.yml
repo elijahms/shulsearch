@@ -1,0 +1,42 @@
+name: Deploy Firestore rules
+
+# Deploys firestore.rules whenever they change on main (plus a manual trigger).
+# Requires the FIREBASE_RULES_DEPLOYER_SA repo secret — a JSON key for a service
+# account with roles/firebaserules.admin + roles/firebase.viewer on shulsearch-app.
+# Until that secret exists the job no-ops green (see the guard step).
+on:
+  push:
+    branches: [main]
+    paths: ['firestore.rules', 'firestore.indexes.json']
+  workflow_dispatch:
+
+jobs:
+  deploy-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Check deploy credentials
+        id: sa
+        env:
+          SA_JSON: ${{ secrets.FIREBASE_RULES_DEPLOYER_SA }}
+        run: |
+          if [ -n "$SA_JSON" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::FIREBASE_RULES_DEPLOYER_SA secret not set — skipping rules deploy (deploy manually with: firebase deploy --only firestore:rules --project shulsearch-app)"
+          fi
+
+      - name: Deploy rules
+        if: steps.sa.outputs.present == 'true'
+        env:
+          SA_JSON: ${{ secrets.FIREBASE_RULES_DEPLOYER_SA }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/rules-deployer.json
+        run: |
+          printf '%s' "$SA_JSON" > "$GOOGLE_APPLICATION_CREDENTIALS"
+          npx firebase-tools@latest deploy --only firestore:rules --project shulsearch-app --non-interactive
+          rm -f "$GOOGLE_APPLICATION_CREDENTIALS"
