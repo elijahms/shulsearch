@@ -3,7 +3,6 @@ import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { getShulsByMetro, type ShulDoc } from '@/lib/shuls/queries'
 import { submitContribution } from '@/lib/submissions/client'
@@ -14,7 +13,7 @@ import {
   type FieldErrors,
   type Opt,
 } from './build'
-import { Field, SelectField, TextField } from './fields'
+import { Field, FormSection, SelectField, TextField } from './fields'
 import { categoryOptions, metroGroups, subtypeOptions } from './options'
 
 export function DisputeForm() {
@@ -107,17 +106,15 @@ export function DisputeForm() {
         : 'No shuls found'
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Report or dispute a shul</CardTitle>
-        <CardDescription>
-          Spot something wrong — a closed shul, a bad address, the wrong denomination? Let us know
-          and suggest a fix.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={onSubmit} className="space-y-4" noValidate>
-          <div className="grid gap-4 sm:grid-cols-2">
+    <div>
+      <p className="max-w-[54ch] text-sm leading-relaxed text-muted-foreground">
+        Spot something wrong — a closed shul, a bad address, the wrong denomination? Let us know
+        and suggest a fix.
+      </p>
+
+      <form onSubmit={onSubmit} className="mt-7 space-y-8" noValidate>
+        <FormSection label="The listing">
+          <div className="grid gap-5 sm:grid-cols-2">
             <Field label="Metro" htmlFor="dispute-metro">
               <SelectField
                 id="dispute-metro"
@@ -139,7 +136,9 @@ export function DisputeForm() {
               />
             </Field>
           </div>
+        </FormSection>
 
+        <FormSection label="The problem">
           <Field
             label="What’s wrong?"
             htmlFor="dispute-note"
@@ -156,15 +155,14 @@ export function DisputeForm() {
               placeholder="This shul closed in 2022."
             />
           </Field>
+        </FormSection>
 
-          <div className="space-y-0.5">
-            <p className="text-sm font-medium">Proposed corrections</p>
-            <p className="text-xs text-muted-foreground">
-              Optional — edit any field that should change. Prefilled from the current listing.
-            </p>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
+        <FormSection
+          label="Proposed corrections"
+          note="Optional"
+          description="Edit any field that should change. Prefilled from the current listing."
+        >
+          <div className="grid gap-5 sm:grid-cols-2">
             <Field label="Name" htmlFor="dispute-name">
               <TextField id="dispute-name" value={values.name} onChange={set('name')} />
             </Field>
@@ -179,7 +177,7 @@ export function DisputeForm() {
             </Field>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2">
             <Field label="Denomination" htmlFor="dispute-denom">
               <SelectField
                 id="dispute-denom"
@@ -200,7 +198,7 @@ export function DisputeForm() {
             </Field>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2">
             <Field label="Address" htmlFor="dispute-address">
               <TextField id="dispute-address" value={values.address} onChange={set('address')} />
             </Field>
@@ -208,7 +206,9 @@ export function DisputeForm() {
               <TextField id="dispute-phone" type="tel" value={values.phone} onChange={set('phone')} />
             </Field>
           </div>
+        </FormSection>
 
+        <FormSection label="Follow-up">
           <Field
             label="Your email"
             htmlFor="dispute-email"
@@ -224,14 +224,14 @@ export function DisputeForm() {
               placeholder="you@example.com"
             />
           </Field>
+        </FormSection>
 
-          <div className="flex justify-end pt-1">
-            <Button type="submit" disabled={submitting}>
-              {submitting ? 'Submitting…' : 'Submit report'}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+        <div className="flex justify-end border-t border-border pt-6">
+          <Button type="submit" disabled={submitting}>
+            {submitting ? 'Submitting…' : 'Submit report'}
+          </Button>
+        </div>
+      </form>
+    </div>
   )
 }

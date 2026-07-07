@@ -13,6 +13,41 @@ import {
 } from '@/components/ui/select'
 import type { Opt, OptGroup } from './build'
 
+/**
+ * Quiet Luxe form group — a small-caps letter-spaced group label (with an optional
+ * right-aligned note) above the fields, separated from the previous group by a hairline.
+ */
+export function FormSection({
+  label,
+  note,
+  description,
+  children,
+}: {
+  label: string
+  note?: string
+  description?: string
+  children: React.ReactNode
+}) {
+  return (
+    <section className="border-t border-border pt-5">
+      <div className="flex items-baseline justify-between gap-4">
+        <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          {label}
+        </h3>
+        {note && (
+          <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{note}</p>
+        )}
+      </div>
+      {description && (
+        <p className="mt-2 max-w-[52ch] text-xs leading-relaxed text-muted-foreground">
+          {description}
+        </p>
+      )}
+      <div className="mt-5 space-y-5">{children}</div>
+    </section>
+  )
+}
+
 /** Label + control + inline hint/error wrapper used by every field on the contribute page. */
 export function Field({
   label,
@@ -30,8 +65,11 @@ export function Field({
   children: React.ReactNode
 }) {
   return (
-    <div className="space-y-1.5">
-      <Label htmlFor={htmlFor}>
+    <div className="space-y-2">
+      <Label
+        htmlFor={htmlFor}
+        className="gap-1 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
+      >
         <span>{label}</span>
         {required && <span className="text-destructive">*</span>}
       </Label>

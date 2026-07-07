@@ -3,7 +3,6 @@ import * as React from 'react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { submitContribution } from '@/lib/submissions/client'
 import {
@@ -12,7 +11,7 @@ import {
   type FieldErrors,
   type NewShulFormValues,
 } from './build'
-import { Field, SelectField, TextField } from './fields'
+import { Field, FormSection, SelectField, TextField } from './fields'
 import { categoryOptions, metroGroups, subtypeOptions } from './options'
 
 export function AddShulForm() {
@@ -45,16 +44,14 @@ export function AddShulForm() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Add a shul</CardTitle>
-        <CardDescription>
-          Know a shul we’re missing? Add what you can — a moderator reviews every submission before
-          it goes live.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={onSubmit} className="space-y-4" noValidate>
+    <div>
+      <p className="max-w-[54ch] text-sm leading-relaxed text-muted-foreground">
+        Know a shul we’re missing? Add what you can — a moderator reviews every submission before
+        it goes live.
+      </p>
+
+      <form onSubmit={onSubmit} className="mt-7 space-y-8" noValidate>
+        <FormSection label="The shul">
           <Field label="Name" htmlFor="new-name" required error={errors.name}>
             <TextField
               id="new-name"
@@ -65,7 +62,7 @@ export function AddShulForm() {
             />
           </Field>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2">
             <Field label="Metro" htmlFor="new-metro">
               <SelectField
                 id="new-metro"
@@ -86,8 +83,12 @@ export function AddShulForm() {
             </Field>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Subtype" htmlFor="new-subtype" hint="Optional — e.g. Modern Orthodox, Chabad">
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field
+              label="Subtype"
+              htmlFor="new-subtype"
+              hint="Optional — e.g. Modern Orthodox, Chabad"
+            >
               <SelectField
                 id="new-subtype"
                 value={values.denominationSubtype}
@@ -96,17 +97,10 @@ export function AddShulForm() {
                 options={subtypeOptions}
               />
             </Field>
-            <Field label="Website" htmlFor="new-website">
-              <TextField
-                id="new-website"
-                type="url"
-                value={values.website}
-                onChange={set('website')}
-                placeholder="https://"
-              />
-            </Field>
           </div>
+        </FormSection>
 
+        <FormSection label="Location & contact">
           <Field label="Address" htmlFor="new-address">
             <TextField
               id="new-address"
@@ -116,22 +110,40 @@ export function AddShulForm() {
             />
           </Field>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-3">
             <Field label="City" htmlFor="new-city">
               <TextField id="new-city" value={values.city} onChange={set('city')} />
             </Field>
             <Field label="State" htmlFor="new-state">
-              <TextField id="new-state" value={values.state} onChange={set('state')} placeholder="NJ" />
+              <TextField
+                id="new-state"
+                value={values.state}
+                onChange={set('state')}
+                placeholder="NJ"
+              />
             </Field>
             <Field label="ZIP" htmlFor="new-zip">
               <TextField id="new-zip" value={values.zip} onChange={set('zip')} />
             </Field>
           </div>
 
-          <Field label="Phone" htmlFor="new-phone">
-            <TextField id="new-phone" type="tel" value={values.phone} onChange={set('phone')} />
-          </Field>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="Website" htmlFor="new-website">
+              <TextField
+                id="new-website"
+                type="url"
+                value={values.website}
+                onChange={set('website')}
+                placeholder="https://"
+              />
+            </Field>
+            <Field label="Phone" htmlFor="new-phone">
+              <TextField id="new-phone" type="tel" value={values.phone} onChange={set('phone')} />
+            </Field>
+          </div>
+        </FormSection>
 
+        <FormSection label="Your submission">
           <Field
             label="Note"
             htmlFor="new-note"
@@ -161,14 +173,14 @@ export function AddShulForm() {
               placeholder="you@example.com"
             />
           </Field>
+        </FormSection>
 
-          <div className="flex justify-end pt-1">
-            <Button type="submit" disabled={submitting}>
-              {submitting ? 'Submitting…' : 'Submit shul'}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+        <div className="flex justify-end border-t border-border pt-6">
+          <Button type="submit" disabled={submitting}>
+            {submitting ? 'Submitting…' : 'Submit shul'}
+          </Button>
+        </div>
+      </form>
+    </div>
   )
 }
