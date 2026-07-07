@@ -1,7 +1,10 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
-/** A single labelled statistic tile used across the cost & community sections. */
+/**
+ * A single labelled statistic — Quiet Luxe: hairline border, quiet card ground,
+ * small-caps label, and a tabular figure. No shadows, no rounding.
+ */
 export function StatCard({
   label,
   value,
@@ -17,15 +20,19 @@ export function StatCard({
   className?: string
 }) {
   return (
-    <div className={cn('rounded-xl bg-card p-4 ring-1 ring-foreground/10', className)}>
-      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+    <div className={cn('border border-border bg-card p-5', className)}>
+      <p className="text-[11px] font-medium uppercase tracking-[0.13em] text-muted-foreground">
+        {label}
+      </p>
       <p
-        className="mt-1 font-heading text-2xl font-semibold leading-tight"
+        className="mt-2.5 text-[1.7rem] font-medium leading-none tracking-[-0.02em] tabular-nums"
         style={accent ? { color: accent } : undefined}
       >
         {value}
       </p>
-      {sub != null && <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{sub}</p>}
+      {sub != null && (
+        <p className="mt-2 text-[0.8rem] leading-[1.4] text-muted-foreground">{sub}</p>
+      )}
     </div>
   )
 }

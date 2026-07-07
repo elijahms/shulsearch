@@ -1,9 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { GraduationCap } from 'lucide-react'
 import { getSchoolsByMetro } from '@/lib/schools/queries'
 import { groupSchools, type SchoolGroups } from '@/lib/schools/group'
-import { StatCard } from './stat-card'
+import { SectionHead } from './section-head'
 import { num } from './format'
 
 const TYPE_LABEL: Record<string, string> = {
@@ -18,6 +17,11 @@ const TYPE_LABEL: Record<string, string> = {
   other: 'Other',
 }
 
+/**
+ * Quiet Luxe schools section: a large light-serif accent figure (the total) beside
+ * a hairline breakdown by type, with a small-caps hashkafa line. Hides itself when
+ * the metro has no seeded schools.
+ */
 export function SchoolsSection({ metroId, accent }: { metroId: string; accent: string }) {
   const [groups, setGroups] = useState<SchoolGroups | null>(null)
 
@@ -37,42 +41,61 @@ export function SchoolsSection({ metroId, accent }: { metroId: string; accent: s
 
   const types = groups ? Object.entries(groups.byType).sort((a, b) => b[1] - a[1]) : []
   const hashkafot = groups ? Object.entries(groups.byHashkafa).sort((a, b) => b[1] - a[1]) : []
+  const max = types.length > 0 ? types[0][1] : 1
 
   return (
-    <section>
-      <h2 className="font-heading text-xl font-semibold tracking-tight">Jewish schools</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Day schools and yeshivas in the community · source: NCES PSS
-      </p>
-      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Schools"
-          value={groups ? num(groups.total) : '—'}
-          accent={accent}
-          sub={
-            <span className="inline-flex items-center gap-1">
-              <GraduationCap className="size-3.5" /> in this community
-            </span>
-          }
-        />
-        {types.slice(0, 3).map(([t, n]) => (
-          <StatCard key={t} label={TYPE_LABEL[t] ?? t} value={num(n)} />
-        ))}
-      </div>
-      {hashkafot.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-2">
-          {hashkafot.map(([h, n]) => (
-            <span
-              key={h}
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ring-1 ring-foreground/10"
-              style={{ backgroundColor: `${accent}14` }}
-            >
-              {h}
-              <span className="text-muted-foreground">{n}</span>
-            </span>
-          ))}
+    <section className="mt-16 md:mt-24">
+      <SectionHead title="Jewish schools" note="Source · NCES PSS" />
+
+      <div className="mt-7 grid items-start gap-10 md:grid-cols-[0.85fr_1.15fr] md:gap-14">
+        <div>
+          <p
+            className="font-serif text-[clamp(4rem,10vw,6.5rem)] font-light leading-[0.92] tracking-[-0.03em] tabular-nums"
+            style={{ color: accent }}
+          >
+            {groups ? num(groups.total) : '…'}
+          </p>
+          <p className="mt-3 max-w-[26ch] text-[15px] leading-relaxed text-foreground/70">
+            Jewish {groups?.total === 1 ? 'school' : 'schools'} in the community, from the
+            national private-school survey.
+          </p>
         </div>
-      )}
+
+        {types.length > 0 && (
+          <div>
+            <div className="border-t border-input">
+              {types.map(([t, n]) => (
+                <div
+                  key={t}
+                  className="flex items-baseline justify-between gap-4 border-b border-border py-3.5"
+                >
+                  <span className="text-[15px]">{TYPE_LABEL[t] ?? t}</span>
+                  <span className="inline-flex items-center gap-3">
+                    <span className="text-[15px] font-medium tabular-nums text-foreground/70">
+                      {num(n)}
+                    </span>
+                    <span
+                      className="h-[3px] rounded-full opacity-85"
+                      style={{ width: `${Math.max(8, Math.round((n / max) * 72))}px`, backgroundColor: accent }}
+                      aria-hidden
+                    />
+                  </span>
+                </div>
+              ))}
+            </div>
+            {hashkafot.length > 0 && (
+              <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 pt-3.5">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                  Hashkafa
+                </span>
+                <span className="text-right text-[0.8rem] font-medium tracking-[0.02em] text-muted-foreground">
+                  {hashkafot.map(([h, n]) => `${h} ${n}`).join(' · ')}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </section>
   )
 }

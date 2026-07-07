@@ -134,6 +134,48 @@
   }
 }
 
+/* Quiet Luxe load motion — a single gentle staggered fade-up on page load */
+@keyframes ql-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@layer utilities {
+  .ql-fade {
+    opacity: 0;
+    animation: ql-fade-up 0.7s cubic-bezier(0.16, 0.8, 0.3, 1) forwards;
+  }
+  /* Stagger steps — keep after .ql-fade so the delay survives the shorthand reset. */
+  .ql-d1 {
+    animation-delay: 0.05s;
+  }
+  .ql-d2 {
+    animation-delay: 0.14s;
+  }
+  .ql-d3 {
+    animation-delay: 0.24s;
+  }
+  .ql-d4 {
+    animation-delay: 0.34s;
+  }
+  .ql-d5 {
+    animation-delay: 0.44s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ql-fade {
+    opacity: 1;
+    animation: none;
+  }
+}
+
 /* Denomination palette (soft pills + map markers) */
 :root {
   --denom-orthodox: #23407a;
