@@ -130,6 +130,13 @@ export function HomeSearch() {
   return (
     <div className="flex h-full flex-col">
       <div className="ql-fade ql-d1 shrink-0 space-y-3 border-b border-border bg-background px-4 py-3.5 sm:px-5">
+        {/* Page heading — the chrome is bare on desktop; every page carries its own. */}
+        <div className="flex items-baseline gap-3">
+          <h1 className="font-serif text-xl font-medium leading-none">Search</h1>
+          <p className="hidden font-serif text-sm italic text-muted-foreground sm:block">
+            homes within a walk of shul
+          </p>
+        </div>
         <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
           <Control label="Community">
             <select

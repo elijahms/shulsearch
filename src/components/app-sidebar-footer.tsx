@@ -3,8 +3,22 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useTheme } from 'next-themes'
 import { toast } from 'sonner'
-import { Moon, Sun, LogIn, LogOut, ShieldCheck, ChevronsUpDown } from 'lucide-react'
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar'
+import {
+  Moon,
+  Sun,
+  LogIn,
+  LogOut,
+  ShieldCheck,
+  ChevronsUpDown,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from 'lucide-react'
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from '@/components/ui/sidebar'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   DropdownMenu,
@@ -24,6 +38,7 @@ import {
 
 export function AppSidebarFooter() {
   const { resolvedTheme, setTheme } = useTheme()
+  const { state, toggleSidebar, isMobile } = useSidebar()
   const [mounted, setMounted] = useState(false)
   const [user, setUser] = useState<User | null>(null)
 
@@ -40,6 +55,7 @@ export function AppSidebarFooter() {
   }, [])
 
   const isDark = mounted && resolvedTheme === 'dark'
+  const collapsed = state === 'collapsed'
 
   async function handleSignIn() {
     try {
@@ -64,22 +80,13 @@ export function AppSidebarFooter() {
 
   return (
     <SidebarMenu>
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          onClick={() => setTheme(isDark ? 'light' : 'dark')}
-          tooltip={isDark ? 'Light mode' : 'Dark mode'}
-        >
-          {isDark ? <Sun /> : <Moon />}
-          <span>{isDark ? 'Light mode' : 'Dark mode'}</span>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-
+      {/* Profile row first (mirrors the reference), then the quiet utility rows. */}
       {!mounted ? (
         // Neutral placeholder keeps SSR/first-client render identical (no auth on the server).
         <SidebarMenuItem>
           <SidebarMenuButton size="lg" className="cursor-default">
-            <Avatar className="size-7 rounded-[2px]">
-              <AvatarFallback className="rounded-[2px] bg-muted text-xs">·</AvatarFallback>
+            <Avatar className="size-7">
+              <AvatarFallback className="bg-muted text-xs">·</AvatarFallback>
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-medium text-muted-foreground">Account</span>
@@ -90,11 +97,11 @@ export function AppSidebarFooter() {
         <SidebarMenuItem>
           <DropdownMenu>
             <DropdownMenuTrigger render={<SidebarMenuButton size="lg" />}>
-              <Avatar className="size-7 rounded-[2px]">
+              <Avatar className="size-7">
                 {user.photoURL ? (
                   <AvatarImage src={user.photoURL} alt={displayName} />
                 ) : null}
-                <AvatarFallback className="rounded-[2px] bg-primary text-xs text-primary-foreground">
+                <AvatarFallback className="bg-primary text-xs text-primary-foreground">
                   {initial}
                 </AvatarFallback>
               </Avatar>
@@ -136,6 +143,32 @@ export function AppSidebarFooter() {
           <SidebarMenuButton onClick={handleSignIn} tooltip="Sign in with Google">
             <LogIn />
             <span>Sign in</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      )}
+
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          onClick={() => setTheme(isDark ? 'light' : 'dark')}
+          tooltip={isDark ? 'Light mode' : 'Dark mode'}
+          className="text-muted-foreground"
+        >
+          {isDark ? <Sun /> : <Moon />}
+          <span>{isDark ? 'Light mode' : 'Dark mode'}</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+
+      {/* Collapse lives with the other chrome controls, like the reference. Hidden on mobile
+          (the sheet has its own dismissal). */}
+      {!isMobile && (
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            onClick={toggleSidebar}
+            tooltip={collapsed ? 'Expand' : 'Collapse'}
+            className="text-muted-foreground"
+          >
+            {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+            <span>{collapsed ? 'Expand' : 'Collapse'}</span>
           </SidebarMenuButton>
         </SidebarMenuItem>
       )}
