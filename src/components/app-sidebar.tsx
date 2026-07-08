@@ -7,6 +7,7 @@ import {
   PlusCircle,
   MapPin,
   Building2,
+  Heart,
   Inbox,
   ListChecks,
   ChartNoAxesColumn,
@@ -41,6 +42,7 @@ const MAIN: NavItem[] = [
   { title: 'Search', href: '/', icon: Home, exact: true },
   { title: 'Communities', href: '/metro', icon: Building2 },
   { title: 'Contribute', href: '/contribute', icon: PlusCircle },
+  { title: 'Support', href: '/support', icon: Heart },
 ]
 
 const ADMIN: NavItem[] = [
