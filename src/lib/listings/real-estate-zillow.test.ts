@@ -99,12 +99,48 @@ describe('RealEstateZillowProvider', () => {
     expect(rows.map((r) => r.id)).toEqual(['2'])
   })
 
-  it('throws on a non-OK response instead of returning a truncated result', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => new Response('rate limited', { status: 429 })))
-    const p = new RealEstateZillowProvider('k')
+  it('throws on a non-OK response after exhausting retries', async () => {
+    const fetchMock = vi.fn(async () => new Response('rate limited', { status: 429 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const p = new RealEstateZillowProvider('k', { retries: 2, sleep: async () => {} })
     await expect(p.search({ bounds, listingType: 'buy', locationHint: 'Teaneck, NJ' })).rejects.toThrow(
       'HTTP 429',
     )
+    expect(fetchMock).toHaveBeenCalledTimes(3) // initial + 2 retries
+  })
+
+  it('retries a 429 and succeeds when the next attempt is OK', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('rate limited', { status: 429 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { listings: [rawListing()], count: 1 } }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+    const p = new RealEstateZillowProvider('k', { retries: 3, sleep: async () => {} })
+    const rows = await p.search({ bounds, listingType: 'buy', locationHint: 'Teaneck, NJ' })
+    expect(rows).toHaveLength(1)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('honors the Retry-After header for backoff timing', async () => {
+    const waits: number[] = []
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('slow down', { status: 429, headers: { 'retry-after': '2' } }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { listings: [], count: 0 } }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+    const p = new RealEstateZillowProvider('k', { sleep: async (ms) => void waits.push(ms) })
+    await p.search({ bounds, listingType: 'buy', locationHint: 'Teaneck, NJ' })
+    expect(waits).toEqual([2000])
   })
 
   it('maps homeType variants', async () => {

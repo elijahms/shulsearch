@@ -9,10 +9,12 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const LISTING_TYPES: ListingType[] = ['buy', 'rent']
-// How many metro pulls run at once. Small enough to stay within RapidAPI rate limits;
-// 48 jobs / 5 ≈ 10 waves × a few seconds each stays well inside Cloud Run's default
-// 300s request timeout (App Hosting exposes no timeout knob in runConfig).
-const CONCURRENCY = 5
+// Metro pulls run one at a time. Each pull already paginates sequentially (up to 3
+// pages), so concurrency>1 bursts several RapidAPI calls at once and trips the plan's
+// rate limit (observed: concurrency 5 → ~two-thirds of jobs 429'd). Sequential keeps
+// us gentle; the provider's own 429 backoff absorbs any remaining throttling. 48 jobs
+// of a few sequential calls each stays well inside Cloud Run's default 300s timeout.
+const CONCURRENCY = 1
 
 interface JobResult {
   metro: string
