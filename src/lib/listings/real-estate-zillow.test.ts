@@ -99,6 +99,14 @@ describe('RealEstateZillowProvider', () => {
     expect(rows.map((r) => r.id)).toEqual(['2'])
   })
 
+  it('throws on a non-OK response instead of returning a truncated result', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('rate limited', { status: 429 })))
+    const p = new RealEstateZillowProvider('k')
+    await expect(p.search({ bounds, listingType: 'buy', locationHint: 'Teaneck, NJ' })).rejects.toThrow(
+      'HTTP 429',
+    )
+  })
+
   it('maps homeType variants', async () => {
     vi.stubGlobal(
       'fetch',

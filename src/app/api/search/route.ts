@@ -34,17 +34,25 @@ export async function POST(req: Request) {
   }
   const p = parsed.data
   const metro = p.metro ? getMetro(p.metro) : undefined
-  const result = await searchHomes({
-    shuls: p.shuls,
-    radiusMeters: p.radiusMeters,
-    listingType: p.listingType,
-    priceMin: p.priceMin,
-    priceMax: p.priceMax,
-    bedsMin: p.bedsMin,
-    bathsMin: p.bathsMin,
-    homeType: p.homeType,
-    locationHint: metro ? metroSearchLocation(metro) : undefined,
-  })
+  let result
+  try {
+    result = await searchHomes({
+      shuls: p.shuls,
+      radiusMeters: p.radiusMeters,
+      listingType: p.listingType,
+      priceMin: p.priceMin,
+      priceMax: p.priceMax,
+      bedsMin: p.bedsMin,
+      bathsMin: p.bathsMin,
+      homeType: p.homeType,
+      locationHint: metro ? metroSearchLocation(metro) : undefined,
+      metroId: metro?.id,
+    })
+  } catch (e) {
+    // Upstream listings source down (rare: only cold-cache searches reach it live).
+    console.error('search: listings provider failed', e)
+    return NextResponse.json({ error: 'listings temporarily unavailable' }, { status: 502 })
+  }
   void logSearch(p, result.total)
   return NextResponse.json(result)
 }

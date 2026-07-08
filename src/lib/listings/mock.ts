@@ -1,3 +1,4 @@
+import { applyListingFilters } from './filters'
 import type { HomeType, Listing, ListingsProvider, ListingsQuery } from './types'
 
 const HOME_TYPES: HomeType[] = ['house', 'condo', 'townhome', 'apartment', 'multi-family']
@@ -35,13 +36,6 @@ export class MockListingsProvider implements ListingsProvider {
         url: '#',
       })
     }
-    return out.filter(
-      (l) =>
-        (q.priceMin == null || l.price >= q.priceMin) &&
-        (q.priceMax == null || l.price <= q.priceMax) &&
-        (q.bedsMin == null || (l.beds ?? 0) >= q.bedsMin) &&
-        (q.bathsMin == null || (l.baths ?? 0) >= q.bathsMin) &&
-        (q.homeType == null || l.homeType === q.homeType),
-    )
+    return applyListingFilters(out, q)
   }
 }

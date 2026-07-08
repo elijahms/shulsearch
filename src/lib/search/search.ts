@@ -2,6 +2,7 @@ import 'server-only'
 import { haversineMeters } from '../geo/geo'
 import { boundingBox, boundsAround } from '../geo/bbox'
 import { getListingsProvider } from '../listings/provider'
+import { getMetro, metroForPoint, metroSearchLocation } from '../metros'
 import { walkingTimes } from '../routes/walk'
 import type { SearchParams, SearchResult, SearchResultItem, ShulPoint } from './types'
 
@@ -17,6 +18,13 @@ export async function searchHomes(params: SearchParams): Promise<SearchResult> {
   const bounds =
     shuls.length === 1 ? boundingBox(shuls[0], radiusMeters) : boundsAround(shuls, radiusMeters)
 
+  // Resolve the metro for the cache key; fall back to the shul's containing metro.
+  // Derive the locationHint from it too, so a cold cache still reaches the
+  // location-based origin instead of silently returning zero listings.
+  const metroId = params.metroId ?? metroForPoint(shuls[0].lat, shuls[0].lng) ?? undefined
+  const metro = metroId ? getMetro(metroId) : undefined
+  const locationHint = params.locationHint ?? (metro ? metroSearchLocation(metro) : undefined)
+
   const listings = await provider.search({
     bounds,
     listingType: params.listingType,
@@ -25,7 +33,8 @@ export async function searchHomes(params: SearchParams): Promise<SearchResult> {
     bedsMin: params.bedsMin,
     bathsMin: params.bathsMin,
     homeType: params.homeType,
-    locationHint: params.locationHint,
+    locationHint,
+    metroId,
   })
 
   // Keep listings within the true circle radius of the nearest shul.

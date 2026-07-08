@@ -1,3 +1,4 @@
+import { applyListingFilters } from './filters'
 import type { HomeType, Listing, ListingsProvider, ListingsQuery } from './types'
 
 const HOST = 'real-estate-zillow-com.p.rapidapi.com'
@@ -48,7 +49,10 @@ export class RealEstateZillowProvider implements ListingsProvider {
       const res = await fetch(url, {
         headers: { 'x-rapidapi-host': HOST, 'x-rapidapi-key': this.apiKey },
       })
-      if (!res.ok) break
+      // Throw rather than return a truncated page-1 superset: the refresh cron must
+      // treat a partial pull as a failed job (keeping the previous full cache doc),
+      // not silently overwrite it with a third of the listings.
+      if (!res.ok) throw new Error(`real-estate-zillow ${endpoint} p${page}: HTTP ${res.status}`)
       const json = (await res.json()) as { data?: { listings?: RawListing[]; count?: number } }
       const listings = json.data?.listings ?? []
       for (const r of listings) {
@@ -76,13 +80,6 @@ export class RealEstateZillowProvider implements ListingsProvider {
       if (listings.length < 40 || (count != null && out.length >= count)) break
     }
 
-    return out.filter(
-      (l) =>
-        (q.priceMin == null || l.price >= q.priceMin) &&
-        (q.priceMax == null || l.price <= q.priceMax) &&
-        (q.bedsMin == null || (l.beds ?? 0) >= q.bedsMin) &&
-        (q.bathsMin == null || (l.baths ?? 0) >= q.bathsMin) &&
-        (q.homeType == null || l.homeType === q.homeType),
-    )
+    return applyListingFilters(out, q)
   }
 }

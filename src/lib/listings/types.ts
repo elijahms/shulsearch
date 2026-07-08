@@ -36,6 +36,8 @@ export interface ListingsQuery {
   homeType?: HomeType
   /** Human location string ("City, ST") for location-based providers (bounds-based providers ignore it). */
   locationHint?: string
+  /** Metro id (e.g. "brooklyn-ny") — keys the per-metro listings cache. */
+  metroId?: string
 }
 
 /** Swappable listings source. All provider quirks live behind this one interface. */

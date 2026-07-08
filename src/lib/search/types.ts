@@ -20,6 +20,8 @@ export interface SearchParams {
   maxResults?: number
   /** Metro location string ("City, ST") for location-based listing providers. */
   locationHint?: string
+  /** Metro id (e.g. "brooklyn-ny") for the per-metro listings cache; derived from the shul when omitted. */
+  metroId?: string
 }
 
 export interface SearchResultItem extends Listing {

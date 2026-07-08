@@ -70,11 +70,23 @@ export function metroCenter(m: Metro): { lat: number; lng: number } {
   return { lat: (s + n) / 2, lng: (w + e) / 2 }
 }
 
-/** The first metro whose bbox contains the point, or null. bbox = [south, west, north, east]. */
+/**
+ * The metro whose bbox contains the point, or null. bbox = [south, west, north, east].
+ * Some bboxes overlap (e.g. Brooklyn/Queens share a strip), so among containing metros
+ * we pick the one whose center is nearest — a border point keys the right community.
+ */
 export function metroForPoint(lat: number, lng: number): string | null {
+  let best: string | null = null
+  let bestDist = Infinity
   for (const m of METROS) {
     const [s, w, n, e] = m.bbox
-    if (lat >= s && lat <= n && lng >= w && lng <= e) return m.id
+    if (lat < s || lat > n || lng < w || lng > e) continue
+    const c = metroCenter(m)
+    const dist = (lat - c.lat) ** 2 + (lng - c.lng) ** 2
+    if (dist < bestDist) {
+      bestDist = dist
+      best = m.id
+    }
   }
-  return null
+  return best
 }

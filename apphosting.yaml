@@ -30,6 +30,15 @@ env:
   - variable: NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY
     value: AIzaSyBngDCyGb5VceAvdSFXoQrWa1H9piPiYQ0
     availability: [BUILD, RUNTIME]
+  # Donation links for /support (any hosted checkout: Stripe Payment Link, Donorbox, PayPal…).
+  # Public URLs, not secrets. Until set, the Support page shows a "donations open soon" state.
+  # - variable: NEXT_PUBLIC_DONATE_URL
+  #   value: https://donate.stripe.com/REPLACE_ME
+  #   availability: [BUILD, RUNTIME]
+  # - variable: NEXT_PUBLIC_DONATE_MONTHLY_URL
+  #   value: https://donate.stripe.com/REPLACE_ME_MONTHLY
+  #   availability: [BUILD, RUNTIME]
+
   # Admin allowlist (comma-separated Google account emails). Not secret.
   - variable: ADMIN_EMAILS
     value: elijahmsilverman@gmail.com
@@ -47,4 +56,11 @@ env:
   #   firebase apphosting:secrets:grantaccess rapidapi-key --backend shulsearch --project shulsearch-app
   - variable: RAPIDAPI_KEY
     secret: rapidapi-key
+    availability: [RUNTIME]
+  # Shared secret guarding the daily listings-refresh cron (/api/cron/refresh-listings).
+  # Cloud Scheduler sends it as `Authorization: Bearer <secret>`. Create + grant with:
+  #   printf '%s' "$(openssl rand -hex 32)" | gcloud secrets create cron-secret --data-file=- --project shulsearch-app --account elijahmsilverman@gmail.com
+  #   firebase apphosting:secrets:grantaccess cron-secret --backend shulsearch --project shulsearch-app
+  - variable: CRON_SECRET
+    secret: cron-secret
     availability: [RUNTIME]
